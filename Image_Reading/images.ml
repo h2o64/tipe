@@ -1,13 +1,14 @@
 (*
-  auteur : FIL
-  date   : janvier 2010
+  auteur : FIL / Louis Popi
+  date   : septembre 2017
   objet  : lecture et sauvegarde de fichiers image dans différents format 
    (PGM, PPM, JPG, PNG, GIF, ...)
   necessite l'installation de la commande convert de la suite de traitements
   d'images Image Magick (http://www.imagemagick.org/)
 *)
 
-
+type image = {height : int ; width : int ; matrix : Graphics.color array array}
+type color = {mutable r : int ; mutable g : int ; mutable b : int ; mutable a : int}
 
 let suffixe_tmp = ".tmp "
 and rm = 
@@ -25,20 +26,8 @@ and dev_null =
     " 2> /dev/null"
   else
     "" 
-
-
 open Graphics 
 
-(*
-  fonction
-    lire_image_ppm : string -> color array array
-  parametre 
-    nom : string = nom du fichier pgm ou ppm 
-*  valeur renvoyee : color array array = tableau des pixels
-  CU : 
-    - suppose qu'un fichier nommé nom contenant une image au format pgm existe 
-    - n'accepte pas de ligne de commentaire (commencant par #) dans l'entete du fichier
-*)
 let lire_image_ppm nom = 
   let entree = open_in_bin nom 
   in
@@ -76,17 +65,6 @@ let lire_image_ppm nom =
 	close_in entree ;
 	img 
 
-
-(*
-  fonction lire_image : string -> color array array
-  parametre 
-    nom : string = nom du fichier image a lire
-  valeur renvoyee : color array array = tableau des pixels de 
-           l'image contenue dans le fichier
-  CU : nom doit etre un fichier image d'un format courant 
-   (ie connu de l'utilitaire convert de la suite ImageMagick)
-  
-*)
 let lire_image nom =
   let r = Sys.command ("convert -depth 8 "^nom^" "^nom^".ppm "^dev_null)
   in
@@ -98,27 +76,9 @@ let lire_image nom =
 	ignore(Sys.command (rm^nom^".ppm"));
 	res
 
-	  
-(*
-  procedure 
-    dessiner_image : color array array -> unit
-  parametre 
-    img : color array array = image a dessiner
-  action : dessine l'image dans le coin inferieur gauche
-  CU : une fenetre graphique doit prealablement etre ouverte
-*)
 let dessiner_image img =
   draw_image (make_image img) 0 0
 
-
-(*
-  procedure
-    sauver_image_pgm : color array array -> string -> unit
-  parametres
-    img : color array array = image a sauvegarder
-    nom : string = nom du fichier de sauvegarde de l'image
-  action : sauvegarde de l'image au format PPM, 
-*)
 let sauver_image_ppm (img : Graphics.color array array) nom = 
   let sortie = open_out_bin nom
   and hauteur = Array.length img
@@ -142,18 +102,7 @@ let sauver_image_ppm (img : Graphics.color array array) nom =
 
 
 let liste_formats = [".png"; ".jpg"; ".gif"; ".bmp"; ".pgm"; ".ppm"] 
-    
-(*
-  procedure
-    sauver_image : color array array -> string -> unit
-  parametres
-    img : color array array = image a sauvegarder
-    nom : string = nom du fichier de sauvegarde de l'image
-  action : sauvegarde de l'image dans un fichier nomme par nom 
-  CU : le nom du fichier doit se terminer par une extension 
-       indiquant le format qui doit faire partie de la liste 
-       liste_formats
-*)
+
 let sauver_image img nom = 
   let suffixe = String.sub nom ((String.length nom) - 4) 4
   in
@@ -167,4 +116,22 @@ let sauver_image img nom =
 	else begin
 	  ignore(Sys.command ("convert "^nom^suffixe_tmp^" "^nom^dev_null)) ;
 	  ignore(Sys.command (rm^nom^suffixe_tmp))
-	end 
+	end
+
+let getHeight img = Array.length img;;
+let getWidth img = Array.length img.(0);;
+
+let import_image file = let matrix = lire_image file in
+			{height = getHeight matrix; width = getWidth matrix; matrix = matrix};;
+
+let rgbint_to_color num =
+	(* Red/Green/Blue/transpArancy *)
+	let b = num mod 256 in
+	let g = (num/256) mod 256 in
+	let r = (num/256/256) mod 256 in
+	let a = (num/256/256/256) in
+	{r = r; g = g; b = b; a = a};;
+let grb_to_rgb cl = let x = cl.r in
+			cl.r <- cl.b;
+			cl.b <- x;;
+let color_to_rgbint cl = cl.r + cl.g*256 + cl.b*256*256 + cl.a*256*256*256;;
