@@ -1,0 +1,80 @@
+(* Open image to analyse *)
+let test_image = import_image "../Orientation_Field/fingerprint.jpg"
+
+(* Get pixel luminance *)
+let getLuminance pix =
+		(* Relative luminance in colorimetric spaces
+			Luminance (Standard for certain colour spaces): (0.2126*R + 0.7152*G + 0.0722*B)
+			Luminance (Option 1): (0.299*R + 0.587*G + 0.114*B)
+			Luminance (Option 2): sqrt( 0.299*R^2 + 0.587*G^2 + 0.114*B^2 )
+			Source:
+				* [1] Wikipédia - Relative luminance
+				* [2] W3.org - https://www.w3.org/TR/AERT#color-contrast
+				* [3] Darel Rex Finley - http://alienryderflex.com/hsp.html *)
+			let cl = rgbint_to_color pix in
+			let luminance = 0.299 *. (float_of_int (cl.r) ** 2.)
+									 +. 0.587 *. (float_of_int (cl.g) ** 2.)
+									 +. 0.114 *. (float_of_int (cl.b) ** 2.) in
+			sqrt luminance;;
+
+(* Convert image to black and white only *)
+let convert_black img =
+	let bak = img in
+	for action = 0 to 1 do
+		for i = 1 to (img.height-2) do
+			for j = 1 to (img.width-2) do
+				if action = 0 then (* Remove less luminant parts *)
+					if getLuminance img.matrix.(i).(j) > 70.0 then bak.matrix.(i).(j)<- 16777215
+				else (* Fill holes *)
+					let detector = ref true in
+					for k = (i-1) to (i+1) do
+						(* Check if the 3x3 chunk is dark *)
+						for l = (j-1) to (j+1) do
+							if (k != i) && (l != j) then
+								detector := !detector && getLuminance bak.matrix.(k).(l) <= 35.0
+						done;
+					done;
+					if !detector then bak.matrix.(i).(j)<- 0
+			done;
+		done;
+	done;
+	bak;;
+
+(* Rotate picture *)
+let transpose (m: int array array) =
+	let n = Array.make_matrix (Array.length m.(0)) (Array.length m) 0 in
+	for i = 0 to (Array.length m - 1) do
+		let row_i = m.(i) in
+			for j = 0 to (Array.length row_i - 1) do
+				n.(j).(i) <- row_i.(j)
+			done;
+		done;
+	n;;
+
+(* Smooth-ed image *)
+let new_test_img = convert_black test_image;;
+
+(* Change an array with white and black dots *)
+let makeDot x y tab =
+	for i = x to y do
+		tab.(i) <- 16777215
+	done;;
+
+(* Make a map with all the averega ridge location *)
+let make_point_map img =
+	let t_img = transpose img.matrix in
+	let bak = t_img in
+	for i = 1 to (img.width-1) do
+		let first = ref (-1) in
+		let last = ref 1 in
+		for j = 1 to (img.height-1) do
+			if (!first < 0) && (getLuminance t_img.(i).(j) < 50.0) then
+				first := j;
+			makeDot !last j bak.(i); (* Set all to white *)
+			if (!first >= 0) && (getLuminance t_img.(i).(j) >= 50.0) then
+				(bak.(i).((!first+j)/2)<- 0;
+				first := -1;
+				last := j+1)
+		done;
+	done;
+	sauver_image (transpose bak) "../Orientation_Field/dots.jpg";;
