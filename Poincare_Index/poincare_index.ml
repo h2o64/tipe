@@ -1,5 +1,5 @@
 (* Open image to analyse *)
-let test_image = import_image "../Orientation_Field/fingerprint.jpg"
+let test_image = import_image "../Poincare_Index/ppf1.png"
 
 (* Variable *)
 let global_bloc_size = 3;;
@@ -7,6 +7,7 @@ let global_bloc_size = 3;;
 (* Types *)
 type bloc = Images.color array;;
 type matrix = float array array;;
+type sp = {mutable x : int ; mutable y : int ; mutable typ : int};; (* 0 = loop | 1 = delta | 2 = whorl | 3 = nothing*)
 
 (* Get necessary bloc size *)
 (* TO BE IMPROVED *)
@@ -32,7 +33,7 @@ let getSurrounding i j image bloc_size =
 
 (* Make matrix array for each bloc_size*bloc_size blocs *)
 let makeBlocList img bloc_size =
-		let (h,w) = getBlocSize img bloc_size in
+		let (h,w) = (img.height,img.width) in
 		let ret = Array.make (h*w)
 						 ((Array.make_matrix bloc_size bloc_size 0. : matrix)) in
 		for i = 1 to (h-2) do
@@ -117,7 +118,7 @@ let getReverse3x3 (m : matrix) =
 (* Get angles *)
 (* Uses Sobel operator *)
 let hX = [|[|-1.;0.;1.|];[|-2.;0.;2.|];[|-1.;0.;1.|]|];;
-let hY = [|[|-1.;-2.;-1.|];[|0.;0.;0.|];[|1.;2.;1.|]|];; (* Transposé de gX *)
+let hY = [|[|-1.;-2.;-1.|];[|0.;0.;0.|];[|1.;2.;1.|]|];; (* Transposée de gX *)
 let getAngles m = 
 	let gX = mult hX m in
 	let gY = mult hY m in
@@ -127,8 +128,56 @@ let getAngles m =
 			ret.(i).(j) <- atan2 gY.(i).(j) gX.(i).(j);
 		done;
 	done;(ret : matrix);;
-	
-	
-	
 
-	
+(* Sum angles and get the sg type *)
+let sumAngles i j (matrix : matrix) =
+	let pi = 4. *. atan 1. in
+	let error = (0.001/.100.)*.pi in (* 1% of error *)
+	let sum = ref 0. in
+	let ret = {x = i ; y = j ; typ = 4} in
+	for i = 0 to 2 do
+		for j = 0 to 2 do
+			if i != j then sum := !sum +. matrix.(i).(j)
+		done;
+	done;
+	if (abs_float (!sum -. pi)) < error then ret.typ<-(1)
+	else if (abs_float (!sum +. pi)) < error then ret.typ<-(2)
+	else if (abs_float (!sum -. 2.*.pi)) < error then ret.typ<-(3);
+	ret;;
+
+(* Get coordonates from array position *)
+let getCoordonates ind w = ((ind/w),(ind mod w));;
+
+(* Get all the singularity points  *)
+let poincare_index image =
+	let blocs = makeBlocList image 3 in
+	let ret = Array.make_matrix (image.height) (image.width) {x = 0 ; y = 0 ; typ = 4} in
+	for i = 0 to ((Array.length blocs) - 1) do
+		let (x,y) = getCoordonates i image.width in
+		ret.(x).(y) <- sumAngles x y (getAngles blocs.(i))
+	done;
+	ret;;
+
+(* Get the right image format *)
+let getFormat height width =
+	let s_height = string_of_int height in
+	let s_width = string_of_int width in
+	String.concat "" [" ";s_height;"x";s_width];;
+
+(* Display singularity points *)
+let display_sp image =
+	let sps = poincare_index image in
+	open_graph (getFormat image.width image.height);
+  draw_image (make_image image.matrix) 0 0;
+	for i = 0 to (image.height - 1) do
+		for j = 0 to (image.width - 1) do
+			if sps.(i).(j).typ < 4 then
+				begin
+					if sps.(i).(j).typ = 0 then set_color red
+					else if sps.(i).(j).typ = 1 then set_color blue
+					else if sps.(i).(j).typ = 2 then set_color green;
+					draw_circle j i 2 (* /!\ *)
+				end;
+		done;
+	done;
+  let _ = read_key() in close_graph();;
