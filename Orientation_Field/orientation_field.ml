@@ -77,4 +77,5 @@ let make_point_map img =
 				last := j+1)
 		done;
 	done;
-	sauver_image (transpose bak) "../Orientation_Field/dots.jpg";;
+	open_graph (getFormat img.width img.height);
+	dessiner_image (transpose bak);;

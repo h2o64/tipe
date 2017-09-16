@@ -77,7 +77,8 @@ let lire_image nom =
 	res
 
 let dessiner_image img =
-  draw_image (make_image img) 0 0
+  draw_image (make_image img) 0 0;
+  let _ = read_key() in close_graph();;
 
 let sauver_image_ppm (img : Graphics.color array array) nom = 
   let sortie = open_out_bin nom
@@ -135,3 +136,9 @@ let grb_to_rgb cl = let x = cl.r in
 			cl.r <- cl.b;
 			cl.b <- x;;
 let color_to_rgbint cl = cl.r + cl.g*256 + cl.b*256*256 + cl.a*256*256*256;;
+
+(* Get the right image format *)
+let getFormat height width =
+	let s_height = string_of_int height in
+	let s_width = string_of_int width in
+	String.concat "" [" ";s_height;"x";s_width];;
