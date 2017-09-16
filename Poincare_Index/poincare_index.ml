@@ -21,15 +21,23 @@ let getBlocNum i j bloc_size = bloc_size*(i mod (bloc_size)) + (j mod (bloc_size
 (* Convert RGB to greyscale *)
 let rgbToGreyScale color = (float_of_int (color.r + color.g + color.b))/.3.;;
 
+(* Get all surrounding blocks *)
+let getSurrounding i j image bloc_size =
+	let ret = Array.make_matrix bloc_size bloc_size 0. in
+	for k = 0 to 2 do
+		for l = 0 to 2 do
+			ret.(k).(l) <- rgbToGreyScale (rgbint_to_color (image.matrix.(i + (k - 1)).(j + (l-1))));
+		done;
+	done;(ret : matrix);;
+
 (* Make matrix array for each bloc_size*bloc_size blocs *)
 let makeBlocList img bloc_size =
 		let (h,w) = getBlocSize img bloc_size in
-		let ret = Array.make (((h*w)/bloc_size)+1)
+		let ret = Array.make (h*w)
 						 ((Array.make_matrix bloc_size bloc_size 0. : matrix)) in
-		for i = 0 to (h-1) do
-			for j = 0 to (w-1) do
-				let cur_pix = rgbToGreyScale (rgbint_to_color (img.matrix.(i).(j))) in
-				ret.(getBlocCo i j h w bloc_size).(i mod (bloc_size)).(j mod (bloc_size)) <- cur_pix
+		for i = 1 to (h-2) do
+			for j = 1 to (w-2) do
+				ret.(i*w+j) <- getSurrounding i j img bloc_size;
 			done;
 		done;
 		ret;;
