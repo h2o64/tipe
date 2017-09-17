@@ -53,7 +53,7 @@ let convolve i j (kernel : matrix) (image_matrix : matrix) r =
 				(image_matrix.(x).(y)*.kernel.(kernel_i + r).(kernel_j + r))
 		done;
 	done;
-	(-1.) *. !tmp;;
+	(-1.) *. !tmp;; (* WARNING: WTF is this -1 *)
 
 (* Convolve whole matrix *)
 let convolve_matrix (kernel : matrix) (m: matrix) =
@@ -95,19 +95,19 @@ let makeBlocList img (bloc_size : bloc_size) =
 let pi = 4. *. atan 1.
 let hX = [|[|-1.;0.;1.|];[|-2.;0.;2.|];[|-1.;0.;1.|]|];;
 let hY = [|[|-1.;-2.;-1.|];[|0.;0.;0.|];[|1.;2.;1.|]|];; (* Transposée de gX *)
-let getAngles m =
+let getAngles m height width =
 	let gX = convolve_matrix hX m in
 	let gY = convolve_matrix hY m in
-	let ret = Array.make_matrix 3 3 0. in
-	for i = 0 to 2 do
-		for j = 0 to 2 do
+	let ret = Array.make_matrix height width 0. in
+	for i = 0 to (height-1) do
+		for j = 0 to (width-1) do
 			ret.(i).(j) <- (atan2 gY.(i).(j) gX.(i).(j))
 		done;
 	done;(ret : matrix);;
 
 (* Sum angles and get the sg type *)
 let sumAngles i j (matrix : matrix) =
-	let error = 15 in (* 30° of error allowance *)
+	let error = (10./.100.)*.pi in (* 15% of error *)
 	let sum = ref 0. in
 	let ret = {x = i ; y = j ; typ = 4} in
 	for k = 0 to 2 do
@@ -115,10 +115,9 @@ let sumAngles i j (matrix : matrix) =
 			if (k != 1) && (l != 1) then sum := !sum +. matrix.(k).(l)
 		done;
 	done;
-	let deg_sum = (int_of_float ((!sum*.180.)/.pi)) in (* mod 360 in *)
-	if (abs (deg_sum - 180)) < error then ret.typ<-(1)
-	else if (abs (deg_sum + 180)) < error then ret.typ<-(2)
-	else if (abs (deg_sum - 360)) < error then ret.typ<-(3);
+	if (abs_float (!sum -. pi)) < error then ret.typ<-(1)
+	else if (abs_float (!sum +. pi)) < error then ret.typ<-(2)
+	else if (abs_float (!sum -. 2.*.pi)) < error then ret.typ<-(3);
 	ret;;
 
 (* Get coordonates from array position *)
@@ -131,7 +130,7 @@ let poincare_index (image : bw_image) =
 	let ret = Array.make_matrix (image.height) (image.width) {x = 0 ; y = 0 ; typ = 4} in
 	for i = 0 to ((Array.length blocs) - 1) do
 		let (x,y) = getCoordonates i image.width in
-		ret.(x).(y) <- sumAngles x y (getAngles blocs.(i))
+		ret.(x).(y) <- sumAngles x y (getAngles blocs.(i) 8 8)
 	done;
 	ret;;
 
@@ -161,8 +160,8 @@ let display_sp image =
 let list_sp image =
 	let great_image = (troncateImage image 8) in
 	let sps = poincare_index (imageToGreyScale great_image) in
-	for i = 5 to (great_image.height - 5) do (* 5 = kernel width *)
-		for j = 5 to (great_image.width - 5) do
+	for i = 5+1 to (great_image.height - 5 - 1) do (* 5 = kernel width *)
+		for j = 5+1 to (great_image.width - 5 - 1) do
 			if sps.(i).(j).typ < 4 then
 				begin
 					if sps.(i).(j).typ = 0 then print_string "Loop at" (* Loop *)
@@ -173,3 +172,31 @@ let list_sp image =
 				end;
 		done;
 	done;;
+
+(* Apply a function to each element of a matrix *)
+let matrixApply f (matrix : matrix) =
+	for i = 0 to ((Array.length matrix) - 1) do
+		for j = 0 to ((Array.length matrix.(0)) - 1) do
+			matrix.(i).(j) <- f (matrix.(i).(j))
+		done;
+	done;;
+
+(* Get the whole image orientation field
+let imageOrientationField image =
+	let bw_img = imageToGreyScale image in
+	applyGaussianFilter bw_img; (* Apply Gaussian filter *)
+	let orien_matrix = getAngles bw_img.matrix (image.height - 1) (image.width - 1) in
+	let rad2deg x = (x *. 180.)/.pi in
+	matrixApply rad2deg orien_matrix;
+	open_graph (getFormat image.width image.height);
+	draw_image (make_image image.matrix) 0 0;
+	for i = 0 to (image.height - 1) do
+		for j = 0 to (image.width - 1) do
+			let f x = (orien_matrix.(i).(j)*.(x +. (float_of_int j)) +. (float_of_int i)) in
+			begin
+				moveto i j;
+				lineto i (f (float_of_int j));
+			end
+		done;
+	done;
+	let _ = read_key() in close_graph();; *)
