@@ -82,6 +82,8 @@ let sanitizer checkme bloc_size =
 		done;
 		!ret;;
 
+(* Actually, I don't need it ....
+
 (* Matrix multiplication *)
 let mult (m0 : matrix) (m1 : matrix)= 
 	let x0 = Array.length m0 and y0 = Array.length m0.(0) and
@@ -97,9 +99,7 @@ let mult (m0 : matrix) (m1 : matrix)=
 				done
 			done;
 	(res_matrix : matrix);;
-
-(* Actually, I don't need it ....
-
+s
 (* Transpose a matrix *)
 let transpose (m : matrix)=
 	let n = Array.make_matrix (Array.length m.(0)) (Array.length m) 0. in
@@ -159,11 +159,7 @@ let matrixApply f (matrix : matrix) =
 	done;;
 
 (* Gaussian Smoothing *)
-let gaussian_kernel = [|
-[|0.003765	; 0.015019	; 0.023792|];
-[|0.015019	; 0.059912	; 0.094907|];
-[|0.023792	; 0.094907	; 0.150342|]
-|];;
+
 
 let gaussian_smoothin matrix =
 	let cos_angles = matrix in
@@ -182,12 +178,44 @@ let gaussian_smoothin matrix =
 	done;(ret : matrix);;
 *)
 
-(* Uses Sobel operator *)
+(* Image Convolution *)
+let convolve (kernel : matrix) (image_matrix : matrix) =
+	let (h,w) = (Array.length image_matrix,Array.length image_matrix.(0)) in
+	let ret = (Array.make_matrix h w 0. : matrix) in
+	let r = ((Array.length kernel) - 1)/2 in (* Kernel is square *)
+	let tmp = ref 0. in
+	for img_i = 0 to (h - 1) do
+		for img_j = 0 to (w - 1) do
+				tmp := 0.;
+				for kernel_i = -r to r do
+					for kernel_j = -r to r do
+						let x = img_i + kernel_i in
+						let y = img_j + kernel_j in
+						(* Exterior values are 0 *)
+						if not ((x < 0) || (y < 0) || (x > (h - 1)) || (y > (w-1))) then
+							tmp := !tmp +.
+								(image_matrix.(x).(y)*.kernel.(kernel_i + r).(kernel_j + r))
+					done;
+				done;
+				ret.(img_i).(img_j) <- (-1.) *. !tmp;
+		done;
+	done;
+	ret;;
+
+(* Uses Sobel operator and Gaussian filter *)
 let hX = [|[|-1.;0.;1.|];[|-2.;0.;2.|];[|-1.;0.;1.|]|];;
 let hY = [|[|-1.;-2.;-1.|];[|0.;0.;0.|];[|1.;2.;1.|]|];; (* Transposée de gX *)
-let getAngles m = 
-	let gX = (mult [|[|1.|];[|2.|];[|1.|]|] (mult [|[|-1.;0.;1.|]|] m)) in
-	let gY = (mult [|[|-1.|];[|0.|];[|1.|]|] (mult [|[|1.;2.;1.|]|] m)) in
+let gaussian_kernel = [| (* Size = 5 *)
+[|0.012841;0.026743;0.03415;0.026743;0.012841|];
+[|0.026743;0.055697;0.071122;0.055697;0.026743|];
+[|0.03415;0.071122;0.090818;0.071122;0.03415|];
+[|0.026743;0.055697;0.071122;0.055697;0.026743|];
+[|0.012841;0.026743;0.03415;0.026743;0.012841|];
+|];;
+let getAngles m =
+	let f_m = convolve gaussian_kernel m in
+	let gX = convolve hX f_m in
+	let gY = convolve hY f_m in
 	let ret = Array.make_matrix 3 3 0. in
 	for i = 0 to 2 do
 		for j = 0 to 2 do
