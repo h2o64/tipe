@@ -1,5 +1,5 @@
 (* Open image to analyse *)
-let test_image = import_image "../Orientation_Field/fingerprint.jpg"
+(* let test_image = import_image "../Orientation_Field/fingerprint.jpg" *)
 
 (* Get pixel luminance *)
 let getLuminance pix =
