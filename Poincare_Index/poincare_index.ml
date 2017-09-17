@@ -1,5 +1,5 @@
 (* Open image to analyse *)
-let test_image = import_image "../Poincare_Index/ppf1.png"
+let test_image = import_image "../Poincare_Index/fingerprint.jpg"
 
 (* Variable *)
 let global_bloc_size = 3;;
@@ -19,6 +19,37 @@ let getBlocCo i j h w bloc_size = (i mod h/bloc_size)*(w/bloc_size)+(j mod w/blo
 (* Get the pixel number inside the bloc *)
 let getBlocNum i j bloc_size = bloc_size*(i mod (bloc_size)) + (j mod (bloc_size));;
 
+(* Get pixel luminance *)
+let getLuminance cl =
+		(* Relative luminance in colorimetric spaces
+			Luminance (Standard for certain colour spaces): (0.2126*R + 0.7152*G + 0.0722*B)
+			Luminance (Option 1): (0.299*R + 0.587*G + 0.114*B)
+			Luminance (Option 2): sqrt( 0.299*R^2 + 0.587*G^2 + 0.114*B^2 )
+			Source:
+				* [1] Wikipédia - Relative luminance
+				* [2] W3.org - https://www.w3.org/TR/AERT#color-contrast
+				* [3] Darel Rex Finley - http://alienryderflex.com/hsp.html *)
+			let luminance = 0.299 *. (float_of_int (cl.r) ** 2.)
+									 +. 0.587 *. (float_of_int (cl.g) ** 2.)
+									 +. 0.114 *. (float_of_int (cl.b) ** 2.) in
+			sqrt luminance;;
+
+(* Get pixel luminance *)
+let getLuminance_from_int pix =
+		(* Relative luminance in colorimetric spaces
+			Luminance (Standard for certain colour spaces): (0.2126*R + 0.7152*G + 0.0722*B)
+			Luminance (Option 1): (0.299*R + 0.587*G + 0.114*B)
+			Luminance (Option 2): sqrt( 0.299*R^2 + 0.587*G^2 + 0.114*B^2 )
+			Source:
+				* [1] Wikipédia - Relative luminance
+				* [2] W3.org - https://www.w3.org/TR/AERT#color-contrast
+				* [3] Darel Rex Finley - http://alienryderflex.com/hsp.html *)
+			let cl = rgbint_to_color pix in
+			let luminance = 0.299 *. (float_of_int (cl.r) ** 2.)
+									 +. 0.587 *. (float_of_int (cl.g) ** 2.)
+									 +. 0.114 *. (float_of_int (cl.b) ** 2.) in
+			sqrt luminance;;
+
 (* Convert RGB to greyscale *)
 let rgbToGreyScale color = (float_of_int (color.r + color.g + color.b))/.3.;;
 
@@ -27,7 +58,7 @@ let getSurrounding i j image bloc_size =
 	let ret = Array.make_matrix bloc_size bloc_size 0. in
 	for k = 0 to 2 do
 		for l = 0 to 2 do
-			ret.(k).(l) <- rgbToGreyScale (rgbint_to_color (image.matrix.(i + (k - 1)).(j + (l-1))));
+			ret.(k).(l) <- getLuminance (rgbint_to_color (image.matrix.(i + (k - 1)).(j + (l-1))));
 		done;
 	done;(ret : matrix);;
 
@@ -116,33 +147,67 @@ let getReverse3x3 (m : matrix) =
 *)
 
 (* Get angles *)
+let pi = 4. *. atan 1.
+
+(*
+(* Apply a function to each element of a matrix *)
+let matrixApply f (matrix : matrix) =
+	for i = 0 to ((Array.length matrix) - 1) do
+		for j = 0 to ((Array.length matrix.(0)) - 1) do
+			matrix.(i).(j) <- f (matrix.(i).(j))
+		done;
+	done;;
+
+(* Gaussian Smoothing *)
+let gaussian_kernel = [|
+[|0.003765	; 0.015019	; 0.023792|];
+[|0.015019	; 0.059912	; 0.094907|];
+[|0.023792	; 0.094907	; 0.150342|]
+|];;
+
+let gaussian_smoothin matrix =
+	let cos_angles = matrix in
+	let sin_angles = matrix in
+	let cos_car x = (cos (x*.x)) in
+	let sin_car x = (sin (x*.x)) in
+	let ret = Array.make_matrix 3 3 0. in
+	matrixApply cos_car cos_angles;
+	matrixApply sin_car sin_angles;
+	let cos_k = mult cos_angles gaussian_kernel in
+	let sin_k = mult sin_angles gaussian_kernel in
+	for i = 0 to 2 do
+		for j = 0 to 2 do
+			ret.(i).(j) <- ((atan2 sin_angles.(i).(j) cos_angles.(i).(j))/.2.)
+		done;
+	done;(ret : matrix);;
+*)
+
 (* Uses Sobel operator *)
 let hX = [|[|-1.;0.;1.|];[|-2.;0.;2.|];[|-1.;0.;1.|]|];;
 let hY = [|[|-1.;-2.;-1.|];[|0.;0.;0.|];[|1.;2.;1.|]|];; (* Transposée de gX *)
 let getAngles m = 
-	let gX = mult hX m in
-	let gY = mult hY m in
+	let gX = (mult [|[|1.|];[|2.|];[|1.|]|] (mult [|[|-1.;0.;1.|]|] m)) in
+	let gY = (mult [|[|-1.|];[|0.|];[|1.|]|] (mult [|[|1.;2.;1.|]|] m)) in
 	let ret = Array.make_matrix 3 3 0. in
 	for i = 0 to 2 do
 		for j = 0 to 2 do
-			ret.(i).(j) <- atan2 gY.(i).(j) gX.(i).(j);
+			ret.(i).(j) <- ((atan2 gY.(i).(j) gX.(i).(j))*.180.)/.pi;
 		done;
 	done;(ret : matrix);;
 
 (* Sum angles and get the sg type *)
 let sumAngles i j (matrix : matrix) =
-	let pi = 4. *. atan 1. in
-	let error = (0.001/.100.)*.pi in (* 1% of error *)
+	let error = 20. in (* 10% of error *)
 	let sum = ref 0. in
 	let ret = {x = i ; y = j ; typ = 4} in
-	for i = 0 to 2 do
-		for j = 0 to 2 do
-			if i != j then sum := !sum +. matrix.(i).(j)
+	for k = 0 to 2 do
+		for l = 0 to 2 do
+			if (k != 1) && (l != 1) then sum := !sum +. matrix.(k).(l)
 		done;
 	done;
-	if (abs_float (!sum -. pi)) < error then ret.typ<-(1)
-	else if (abs_float (!sum +. pi)) < error then ret.typ<-(2)
-	else if (abs_float (!sum -. 2.*.pi)) < error then ret.typ<-(3);
+	if (abs_float (!sum -. 180.)) < error then ret.typ<-(1)
+	else if (abs_float (!sum +. 180.)) < error then ret.typ<-(2)
+	else if (abs_float (!sum -. 360.)) < error then ret.typ<-(3);
 	ret;;
 
 (* Get coordonates from array position *)
@@ -169,15 +234,39 @@ let display_sp image =
 	let sps = poincare_index image in
 	open_graph (getFormat image.width image.height);
   draw_image (make_image image.matrix) 0 0;
+	set_color red;
+	for i = 0 to (image.height - 1) do
+		for j = 0 to (image.width - 1) do
+				if sps.(i).(j).typ < 4 then
+					(moveto j i;
+					draw_circle j i 3);
+		done;
+	done;
+  let _ = read_key() in close_graph();;
+
+(* List singularity points *)
+let list_sp image =
+	let sps = poincare_index image in
 	for i = 0 to (image.height - 1) do
 		for j = 0 to (image.width - 1) do
 			if sps.(i).(j).typ < 4 then
 				begin
-					if sps.(i).(j).typ = 0 then set_color red
-					else if sps.(i).(j).typ = 1 then set_color blue
-					else if sps.(i).(j).typ = 2 then set_color green;
-					draw_circle j i 2 (* /!\ *)
+					if sps.(i).(j).typ = 0 then print_string "Loop at " (* Loop *)
+					else if sps.(i).(j).typ = 1 then print_string "Delta at " (* Delta *)
+					else if sps.(i).(j).typ = 2 then print_string "Whorl at "; (* Whorl *)
+					print_string (getFormat i j);
+					print_string "\n";
 				end;
 		done;
+	done;;
+
+(* Get vector field 
+let getVectorField image =
+	let blocs = makeBlocList image 3 in
+	let ret = Array.make_matrix (image.height) (image.width) {x = 0 ; y = 0 ; angle = 0} in
+	for i = 0 to ((Array.length blocs) - 1) do
+		let (x,y) = getCoordonates i image.width in
+		ret.(x).(y) <- sumAngles x y (getAngles blocs.(i))
 	done;
-  let _ = read_key() in close_graph();;
+	ret;;
+*)
