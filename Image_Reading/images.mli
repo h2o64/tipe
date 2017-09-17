@@ -31,4 +31,5 @@ val import_image : string -> image
 val rgbint_to_color : int -> color
 val grb_to_rgb : color -> unit
 val color_to_rgbint : color -> int
+val getFormat : int -> int -> string
 

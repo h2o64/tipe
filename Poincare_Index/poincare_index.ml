@@ -21,6 +21,18 @@ let imageToGreyScale (image : Images.image) =
 		done;
 		({height = h; width = w; matrix = ret} : bw_image);;
 
+(* Troncate image for great bloc size *)
+let troncateImage (image : Images.image) (bloc_size : bloc_size) =
+	let h = image.height - (image.height mod bloc_size) in
+	let w = image.width - (image.width mod bloc_size) in
+	let ret = (Array.make_matrix h w 0) in
+	for i = 0 to (h-1) do
+		for j = 0 to (w-1) do
+			ret.(i).(j) <- image.matrix.(i).(j)
+		done;
+	done;
+	({ height = h ; width = w ; matrix = ret } : image);;
+
 (* Image Convolution - Gaussian filter *)
 let (gaussian_kernel : matrix) = [| (* Size = 5 *)
 [|0.012841;0.026743;0.03415;0.026743;0.012841|];
@@ -115,7 +127,7 @@ let getCoordonates ind w = ((ind/w),(ind mod w));;
 (* Get all the singularity points *)
 let poincare_index (image : bw_image) =
 	applyGaussianFilter image; (* Apply Gaussian filter *)
-	let blocs = makeBlocList image 3 in
+	let blocs = makeBlocList image 8 in
 	let ret = Array.make_matrix (image.height) (image.width) {x = 0 ; y = 0 ; typ = 4} in
 	for i = 0 to ((Array.length blocs) - 1) do
 		let (x,y) = getCoordonates i image.width in
@@ -131,12 +143,13 @@ let getFormat height width =
 
 (* Display singularity points *)
 let display_sp image =
-	let sps = poincare_index (imageToGreyScale image) in
-	open_graph (getFormat image.width image.height);
-	draw_image (make_image image.matrix) 0 0;
+	let great_image = (troncateImage image 8) in
+	let sps = poincare_index (imageToGreyScale great_image) in
+	open_graph (getFormat great_image.width great_image.height);
+	draw_image (make_image great_image.matrix) 0 0;
 	set_color red;
-	for i = 5 to (image.height - 5) do
-		for j = 5 to (image.width - 5) do
+	for i = 5 to (great_image.height - 5) do
+		for j = 5 to (great_image.width - 5) do
 				if sps.(i).(j).typ < 4 then
 					(moveto j i;
 					draw_circle j i 5);
@@ -146,9 +159,10 @@ let display_sp image =
 
 (* List singularity points *)
 let list_sp image =
-	let sps = poincare_index (imageToGreyScale image) in
-	for i = 5 to (image.height - 5) do
-		for j = 5 to (image.width - 5) do
+	let great_image = (troncateImage image 8) in
+	let sps = poincare_index (imageToGreyScale great_image) in
+	for i = 5 to (great_image.height - 5) do (* 5 = kernel width *)
+		for j = 5 to (great_image.width - 5) do
 			if sps.(i).(j).typ < 4 then
 				begin
 					if sps.(i).(j).typ = 0 then print_string "Loop at" (* Loop *)
