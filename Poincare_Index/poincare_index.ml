@@ -45,26 +45,28 @@ let (gaussian_kernel : matrix) = [| (* Size = 5 *)
 (* Do convolution on only one pixel *)
 let convolve i j (kernel : matrix) (image_matrix : matrix) r =
 	let tmp = ref 0. in
-	for kernel_i = -r to r do
-		for kernel_j = -r to r do
-			let x = i + kernel_i in
-			let y = j + kernel_j in
-			tmp := !tmp +.
-				(image_matrix.(x).(y)*.kernel.(kernel_i + r).(kernel_j + r))
+	let (h,w) = ((Array.length image_matrix),(Array.length image_matrix.(0))) in
+	for m = 0 to (r - 1) do
+		for n = 0 to (r - 1) do
+			(* Use zero-padding to extend the image *)
+			if not(((i-m) < 0) || ((j-n) < 0) || ((i-m) > (h-1)) || ((j-n) > (w-1))) then 
+				tmp := !tmp +.
+					(kernel.(m).(n)*.image_matrix.(i - m).(j - n))
 		done;
 	done;
-	(-1.) *. !tmp;; (* WARNING: WTF is this -1 *)
+	!tmp;; (* WARNING: WTF is this -1 *)
 
 (* Convolve whole matrix *)
 let convolve_matrix (kernel : matrix) (m: matrix) =
-		let r = ((Array.length kernel) - 1)/2 in (* Kernel is square *)
+		let r = Array.length kernel in (* Kernel is square *)
 		let (h,w) = ((Array.length m),(Array.length m.(0))) in
-		let ret = m in
-		for i = r to (h - 1 - r) do
-			for j = r to (w - 1 - r) do
+		let ret = Array.make_matrix h w 0. in
+		for i = 0 to (h - 1) do
+			for j = 0 to (w - 1) do
 				ret.(i).(j) <- (convolve i j kernel m r)
 			done;
-		done;ret;;
+		done;
+		ret;;
 
 (* Apply Gaussian filter on image *)
 let applyGaussianFilter (image : bw_image) =
@@ -93,7 +95,7 @@ let makeBlocList img (bloc_size : bloc_size) =
 
 (* Uses Sobel operator *)
 let pi = 4. *. atan 1.
-let hX = [|[|-1.;0.;1.|];[|-2.;0.;2.|];[|-1.;0.;1.|]|];;
+let hX = [|[|1.;0.;-1.|];[|2.;0.;-2.|];[|1.;0.;-1.|]|];;
 let hY = [|[|-1.;-2.;-1.|];[|0.;0.;0.|];[|1.;2.;1.|]|];; (* Transposée de gX *)
 let getAngles m height width =
 	let gX = convolve_matrix hX m in
