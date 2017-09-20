@@ -2,14 +2,14 @@
 open Image_magick;;
 
 (* Structures *)
-type matrix = float array array;;
+type 'a matrix = 'a array array;;
 type bloc_size = int;;
-type image = {height : int ; width : int ; matrix : Graphics.color array array};;
-type bw_image = {height : int ; width : int ; mutable matrix : matrix};;
+type image = {height : int ; width : int ; mutable matrix : Graphics.color matrix};;
+type bw_image = {height : int ; width : int ; mutable matrix : float matrix};;
 
 (* Get height and width of an image *)
-let getHeight img = Array.length img;;
-let getWidth img = Array.length img.(0);;
+let getHeight (img : 'a matrix) = Array.length img;;
+let getWidth (img : 'a matrix) = Array.length img.(0);;
 
 (* Import an image *)
 let import_image file = let matrix = lire_image file in
@@ -22,7 +22,7 @@ let getFormat height width =
 	String.concat "" [" ";s_height;"x";s_width];;
 
 (* Convert RGB integer to color type *)
-let rgbint_to_color num =
+let rgbint_to_color (num : Graphics.color) =
 	(* Red/Green/Blue *)
 	let b = num mod 256 in
 	let g = (num/256) mod 256 in
