@@ -2,36 +2,7 @@
 (* let test_image = import_image "../Poincare_Index/fingerprint.jpg" *)
 
 (* Types *)
-type matrix = float array array;;
-type bloc_size = int;;
-type bw_image = {height : int ; width : int ; mutable matrix : matrix};;
 type sp = {mutable x : int ; mutable y : int ; mutable typ : int};; (* 0 = loop | 1 = delta | 2 = whorl | 3 = nothing*)
-
-(* Convert RGB to greyscale *)
-let rgbToGreyScale color = (float_of_int (color.r + color.g + color.b))/.3.;;
-
-(* Convert whole image to greyscale *)
-let imageToGreyScale (image : Images.image) =
-		let (h,w) = (image.height,image.width) in
-		let ret = Array.make_matrix h w 0. in
-		for i = 0 to (h-1) do
-			for j = 0 to (w-1) do
-				ret.(i).(j) <- rgbToGreyScale (rgbint_to_color image.matrix.(i).(j))
-			done;
-		done;
-		({height = h; width = w; matrix = ret} : bw_image);;
-
-(* Troncate image for great bloc size *)
-let troncateImage (image : Images.image) (bloc_size : bloc_size) =
-	let h = image.height - (image.height mod bloc_size) in
-	let w = image.width - (image.width mod bloc_size) in
-	let ret = (Array.make_matrix h w 0) in
-	for i = 0 to (h-1) do
-		for j = 0 to (w-1) do
-			ret.(i).(j) <- image.matrix.(i).(j)
-		done;
-	done;
-	({ height = h ; width = w ; matrix = ret } : image);;
 
 (* Image Convolution - Gaussian filter *)
 let (gaussian_kernel : matrix) = [| (* Size = 5 *)
@@ -135,12 +106,6 @@ let poincare_index (image : bw_image) =
 		ret.(x).(y) <- sumAngles x y (getAngles blocs.(i) 8 8)
 	done;
 	ret;;
-
-(* Get the right image format *)
-let getFormat height width =
-	let s_height = string_of_int height in
-	let s_width = string_of_int width in
-	String.concat "" [" ";s_height;"x";s_width];;
 
 (* Display singularity points *)
 let display_sp image =

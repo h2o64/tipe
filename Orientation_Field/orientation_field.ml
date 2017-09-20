@@ -1,22 +1,6 @@
 (* Open image to analyse *)
 (* let test_image = import_image "../Orientation_Field/fingerprint.jpg" *)
 
-(* Get pixel luminance *)
-let getLuminance pix =
-		(* Relative luminance in colorimetric spaces
-			Luminance (Standard for certain colour spaces): (0.2126*R + 0.7152*G + 0.0722*B)
-			Luminance (Option 1): (0.299*R + 0.587*G + 0.114*B)
-			Luminance (Option 2): sqrt( 0.299*R^2 + 0.587*G^2 + 0.114*B^2 )
-			Source:
-				* [1] Wikipédia - Relative luminance
-				* [2] W3.org - https://www.w3.org/TR/AERT#color-contrast
-				* [3] Darel Rex Finley - http://alienryderflex.com/hsp.html *)
-			let cl = rgbint_to_color pix in
-			let luminance = 0.299 *. (float_of_int (cl.r) ** 2.)
-									 +. 0.587 *. (float_of_int (cl.g) ** 2.)
-									 +. 0.114 *. (float_of_int (cl.b) ** 2.) in
-			sqrt luminance;;
-
 (* Convert image to black and white only *)
 let convert_black img =
 	let bak = img in

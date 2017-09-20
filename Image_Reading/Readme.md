@@ -1,5 +1,4 @@
-Copyright for ImageMagick support in CAML (http://www.fil.univ-lille1.fr/~wegrzyno/portail/API1/Doc/TP/TP-Images/tp-image003.html)
-Documentation : http://www.fil.univ-lille1.fr/~wegrzyno/portail/API1/Doc/TP/TP-Images/Doc/Images.html
+Complementary image structures for TIPE project
 
 Compile the module with :
 ```shell
