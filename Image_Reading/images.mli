@@ -1,26 +1,18 @@
-type matrix = float array array
-type bloc_size = int
-type image = {
-  height : int;
-  width : int;
-  matrix : Graphics.color array array;
-}
-type bw_image = { height : int; width : int; mutable matrix : matrix; }
-type color = {
-  mutable r : int;
-  mutable g : int;
-  mutable b : int;
-  mutable a : int;
-}
-val getHeight : 'a array -> int
-val getWidth : 'a array array -> int
-val import_image : string -> image
-val rgbint_to_color : int -> color
-val grb_to_rgb : color -> unit
-val color_to_rgbint : color -> int
+type 'a matrix = 'a array array
+type 'a bloc = { x : int; y : int; matrix : 'a matrix; }
+type 'a pixel_blocs = 'a bloc list
+type 'a image = { height : int; width : int; mutable matrix : 'a matrix; }
+val getHeight : 'a matrix -> int
+val getWidth : 'a matrix -> int
+val matrixApply : ('a -> 'b) -> 'a matrix -> 'b matrix
+val import_image : string -> Graphics.color image
 val getFormat : int -> int -> string
-val getLuminance : int -> float
-val rgbToGreyScale : color -> float
-val imageToGreyScale : image -> bw_image
-val troncateImage : image -> bloc_size -> image
+val color_of_rgbint : Graphics.color -> int * int * int
+val greyscale_of_rgb : Graphics.color -> float
+val rgb_of_greyscale : float -> int
+val imageToGreyScale : Graphics.color image -> float image
+val bwimageToImage : float image -> int image
+val getSurrounding : int -> int -> 'a matrix -> int -> 'a matrix
+val makeBlocList : 'a matrix -> int -> 'a bloc array
+val troncateImage : 'a image -> int -> 'a image
 
