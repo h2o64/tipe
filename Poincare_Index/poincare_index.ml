@@ -62,19 +62,37 @@ let getAngles m =
 		done;
 	done;(ret : float matrix);;
 
+(* Get the angle between two angles *)
+let getAngleBetween x y =
+	let ret = ref (x-y) in
+	let signum p = if (p > 0) then (-1) else 1 in
+	if ((abs !ret) > 180) then
+		ret := (-1) * (signum !ret) * (360 - (abs !ret));
+	!ret;;
+
 (* Sum angles and get the sg type *)
 let sumAngles i j (matrix : float matrix) =
-	let error = (5./.100.)*.pi in (* 5% of error *)
-	let sum = ref 0. in
+	let error = 10 in (* 20° of error *)
 	let ret = {x = i ; y = j ; typ = 3} in
+	let deg_of_rad x = int_of_float ((x*.180.)/.pi) in
+	let liste = Array.make 8 0 in
+	let count = ref 0 in
 	for k = 0 to 2 do
 		for l = 0 to 2 do
-			if (k != 1) && (l != 1) then sum := !sum +. matrix.(k).(l)
+			if ((k != 1) && (l != 1)) then
+				(liste.(!count)<-(deg_of_rad matrix.(k).(l));
+				count := (!count + 1))
 		done;
 	done;
-	if (abs_float (!sum -. pi)) < error then ret.typ<-(0)
-	else if (abs_float (!sum +. pi)) < error then ret.typ<-(1)
-	else if (abs_float (!sum -. 2.*.pi)) < error then ret.typ<-(2);
+	let sum = ref 0 in
+	for m = 0 to 7 do
+		(* if abs (getAngleBetween liste.(m) liste.((m+1) mod 8)) > 90 then
+			(liste.((m+1) mod 8)<-((liste.((m+1) mod 8)) + 180)); *)
+		sum := !sum + (getAngleBetween liste.(m) liste.((m+1) mod 8))
+	done;
+	if (abs (!sum - 180)) < error then ret.typ<-(0)
+	else if (abs (!sum + 180)) < error then ret.typ<-(1)
+	else if (abs (!sum - 360)) < error then ret.typ<-(2);
 	ret;;
 
 (* Get coordonates from array position *)
@@ -104,8 +122,13 @@ let display_sp image =
 	for i = 0 to (image.height - 1) do
 		for j = 5 to (image.width - 1) do
 				if sps.(i).(j).typ < 3 then
-					(moveto j i;
-					draw_circle j i 2); (* WARNING: WTF *)
+				begin
+					if sps.(i).(j).typ = 0 then set_color green (* Loop *)
+					else if sps.(i).(j).typ = 1 then set_color blue (* Delta *)
+					else if sps.(i).(j).typ = 2 then set_color red; (* Whorl *)
+					moveto j i;
+					draw_circle j i 2 (* WARNING: WTF *)
+				end;
 		done;
 	done;
 	let _ = read_key() in close_graph();;
