@@ -5,11 +5,38 @@ let test_image = import_image "../Poincare_Index/fingerprint.jpg"
 (* 0 = loop | 1 = delta | 2 = whorl | 3 = nothing *)
 type sp = {mutable x : int ; mutable y : int ; mutable typ : int};;
 
-(* Image Convolution - Gaussian filter *)
+(* Image Convolution - Kernel Collection *)
 let (gaussian_kernel : float matrix) = [| (* Size = 5 *)
 [|0.012841;0.026743;0.03415;0.026743;0.012841|];
 [|0.026743;0.055697;0.071122;0.055697;0.026743|];
 [|0.03415;0.071122;0.090818;0.071122;0.03415|];
+[|0.026743;0.055697;0.071122;0.055697;0.026743|];
+[|0.012841;0.026743;0.03415;0.026743;0.012841|];
+|];;
+let (sharpen_kernel : float matrix) = [|
+[|0.;-1.;0.|];
+[|-1.;5.;-1.|];
+[|0.;5.;-1.|];
+|];;
+let (edge1_kernel : float matrix) = [|
+[|1.;0.;-1.|];
+[|0.;0.;0.|];
+[|-1.;0.;1.|];
+|];;
+let (edge2_kernel : float matrix) = [|
+[|0.;1.;0.|];
+[|1.;-4.;1.|];
+[|0.;1.;0.|];
+|];;
+let (edge3_kernel : float matrix) = [|
+[|-1.;-1.;-1.|];
+[|-1.;8.;-1.|];
+[|-1.;-1.;-1.|];
+|];;
+let (unsharp_masking_kernel : float matrix) = [| (* Size = 5 *)
+[|0.012841;0.026743;0.03415;0.026743;0.012841|];
+[|0.026743;0.055697;0.071122;0.055697;0.026743|];
+[|0.03415;0.071122;1.859375;0.071122;0.03415|];
 [|0.026743;0.055697;0.071122;0.055697;0.026743|];
 [|0.012841;0.026743;0.03415;0.026743;0.012841|];
 |];;
@@ -41,8 +68,8 @@ let convolve_matrix (kernel : 'a matrix) (m : 'a matrix) =
 		done;
 		ret;;
 
-(* Apply Gaussian filter on image *)
-let applyGaussianFilter matrix = convolve_matrix gaussian_kernel matrix;;
+(* Apply filter on an image *)
+let applyFilter matrix kernel = convolve_matrix kernel matrix;;
 
 (* Uses Sobel operator *)
 (* https://en.wikipedia.org/wiki/Prewitt_operator *)
@@ -148,9 +175,9 @@ let list_sp image =
 	done;;
 
 (* Testing *)
-let gaussian_test image =
+let filter_test image kernel =
 	let bw_img = imageToGreyScale image in
-	let m = applyGaussianFilter bw_img.matrix in
+	let m = applyFilter bw_img.matrix kernel in
 	let last = matrixApply rgb_of_greyscale m in
 	open_graph (getFormat image.width image.height);
 	dessiner_image last;;
