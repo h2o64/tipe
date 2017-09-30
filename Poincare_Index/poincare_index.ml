@@ -21,9 +21,10 @@ let convolve i j (kernel : 'a matrix) (image_matrix : 'a matrix) r =
 	for m = 0 to (r - 1) do
 		for n = 0 to (r - 1) do
 			(* Use zero-padding to extend the image *)
-			if not(((i-m) < 0) || ((j-n) < 0) || ((i-m) > (h-1)) || ((j-n) > (w-1))) then 
+			let (a,b) = ((i + m - (r/2)),(j + n - (r/2))) in
+			if not((a < 0) || (b < 0) || (a > (h-1)) || (b > (w-1))) then 
 				tmp := !tmp +.
-					(kernel.(m).(n)*.image_matrix.(i - m).(j - n))
+					(kernel.(m).(n)*.image_matrix.(a).(b))
 		done;
 	done;
 	!tmp;;
@@ -47,10 +48,10 @@ let applyGaussianFilter matrix = convolve_matrix gaussian_kernel matrix;;
 (* https://en.wikipedia.org/wiki/Prewitt_operator *)
 (* https://en.wikipedia.org/wiki/Sobel_operator *)
 let pi = 4. *. atan 1.
-(* let hX = [|[|1.;0.;-1.|];[|2.;0.;-2.|];[|1.;0.;-1.|]|];; (* Sobel *)
-let hY = [|[|1.;2.;1.|];[|0.;0.;0.|];[|-1.;-2.;-1.|]|];; (* Transposée de gX *) *)
-let hX = [|[|1.;0.;-1.|];[|1.;0.;-1.|];[|1.;0.;-1.|]|];; (* Prewitt *)
-let hY = [|[|1.;1.;1.|];[|0.;0.;0.|];[|-1.;-1.;-1.|]|];; (* Transposée de gX *)
+let hX = [|[|1.;0.;-1.|];[|2.;0.;-2.|];[|1.;0.;-1.|]|];; (* Sobel *)
+let hY = [|[|1.;2.;1.|];[|0.;0.;0.|];[|-1.;-2.;-1.|]|];; (* Transposée de gX *)
+(* let hX = [|[|1.;0.;-1.|];[|1.;0.;-1.|];[|1.;0.;-1.|]|];; (* Prewitt *)
+let hY = [|[|1.;1.;1.|];[|0.;0.;0.|];[|-1.;-1.;-1.|]|];; (* Transposée de gX *) *)
 let getAngles m =
 	let (h,w) = ((Array.length m),(Array.length m.(0))) in
 	let gX = convolve_matrix hX m in
@@ -95,39 +96,36 @@ let sumAngles i j (matrix : float matrix) =
 	else if (abs (!sum - 360)) < error then ret.typ<-(2);
 	ret;;
 
-(* Get coordonates from array position *)
-let getCoordonates ind w = ((ind/w),(ind mod w));;
-
 (* Get all the singularity points *)
 let poincare_index image =
-	(* let blocs = makeBlocList (getAngles (applyGaussianFilter image.matrix)) 3 in *)
 	let blocs = makeBlocList (getAngles image.matrix) 3 in
 	let ret = Array.make_matrix (image.height) (image.width) {x = 0 ; y = 0 ; typ = 3} in
 	let is_border x y = (x = 0) || (x = (image.height - 1)) || (y = 0) || (y = (image.width - 1)) in
 	for i = 0 to ((Array.length blocs) - 1) do
 		let (x,y) = (blocs.(i).x,blocs.(i).y) in
-		ret.(x).(y) <- (if is_border x y then
-											{x = x ; y = y ; typ = 3}
-									 else 
-											sumAngles x y (getAngles blocs.(i).matrix))
+		ret.(x).(y) <-
+			(if is_border x y then
+				{x = x ; y = y ; typ = 3}
+			else 
+				sumAngles x y (getAngles blocs.(i).matrix))
 	done;
 	ret;;
 
 (* Display singularity points *)
 let display_sp image =
 	let sps = poincare_index (imageToGreyScale image) in
-	open_graph (getFormat image.width image.height);
+	(* open_graph (getFormat image.width image.height); *)
+	open_graph " 800x800"; (* Temporary *)
 	draw_image (make_image image.matrix) 0 0;
-	set_color red;
 	for i = 0 to (image.height - 1) do
 		for j = 5 to (image.width - 1) do
 				if sps.(i).(j).typ < 3 then
 				begin
-					if sps.(i).(j).typ = 0 then set_color green (* Loop *)
-					else if sps.(i).(j).typ = 1 then set_color blue (* Delta *)
+					if sps.(i).(j).typ = 0 then set_color red (* Loop *)
+					else if sps.(i).(j).typ = 1 then set_color red (* Delta *)
 					else if sps.(i).(j).typ = 2 then set_color red; (* Whorl *)
-					moveto j i;
-					draw_circle j i 2 (* WARNING: WTF *)
+					moveto i j;
+					draw_circle i j 2 (* WARNING: WTF *)
 				end;
 		done;
 	done;
@@ -154,5 +152,6 @@ let gaussian_test image =
 	let bw_img = imageToGreyScale image in
 	let m = applyGaussianFilter bw_img.matrix in
 	let last = matrixApply rgb_of_greyscale m in
+	open_graph (getFormat image.width image.height);
 	dessiner_image last;;
 	

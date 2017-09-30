@@ -55,22 +55,25 @@ let bwimageToImage image = let new_m = (matrixApply rgb_of_greyscale image.matri
 	{ height = image.height ; width = image.width ; matrix = new_m };;
 
 (* Get all surrounding blocks *)
-let getSurrounding i j (matrix : 'a matrix) bloc_size =
+let getSurrounding i j (matrix : 'a matrix) h w bloc_size =
 	let ret = (Array.make_matrix bloc_size bloc_size matrix.(0).(0)) in
-	for k = 0 to 2 do
-		for l = 0 to 2 do
-			ret.(k).(l) <- matrix.(i + (k - 1)).(j + (l-1));
+	for k = 0 to (bloc_size-1) do
+		for l = 0 to (bloc_size-1) do
+			let a = i+(k-1) in
+			let b = j+(l-1) in
+			if not((a < 0) || (b < 0) || (a >= h) || (b >= w)) then
+				ret.(k).(l) <- matrix.(a).(b);
 		done;
 	done;(ret : 'a matrix);;
 
 (* Make matrix array for each bloc_size*bloc_size blocs *)
 let makeBlocList matrix bloc_size =
 	let (h,w) = ((Array.length matrix),(Array.length matrix.(0))) in
-		let ret = Array.make (h*w)
-				{x = 0; y = 0; matrix = (Array.make_matrix bloc_size bloc_size matrix.(0).(0))}  in
-		for i = 1 to (h-1-(bloc_size/2)) do
-			for j = 1 to (w-1-(bloc_size/2)) do
-				ret.(i*w+j) <- {x = i ; y = j ; matrix = (getSurrounding i j matrix bloc_size)}
+	let ret = Array.make (h*w)
+			{x = -1; y = -1; matrix = (Array.make_matrix bloc_size bloc_size matrix.(0).(0))}  in
+		for i = 0 to (h-1) do
+			for j = 0 to (w-1) do
+				ret.(i*w+j) <- {x = i ; y = j ; matrix = (getSurrounding i j matrix h w bloc_size)}
 			done;
 		done;
 		ret;;
