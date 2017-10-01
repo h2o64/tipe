@@ -15,4 +15,4 @@ val bwimageToImage : float image -> int image
 val getSurrounding : int -> int -> 'a matrix -> int -> int -> int -> 'a matrix
 val makeBlocList : 'a matrix -> int -> 'a bloc array
 val troncateImage : 'a image -> int -> 'a image
-
+val transpose : 'a matrix -> 'a matrix
