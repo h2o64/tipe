@@ -12,7 +12,7 @@ val greyscale_of_rgb : Graphics.color -> float
 val rgb_of_greyscale : float -> int
 val imageToGreyScale : Graphics.color image -> float image
 val bwimageToImage : float image -> int image
-val getSurrounding : int -> int -> 'a matrix -> int -> 'a matrix
+val getSurrounding : int -> int -> 'a matrix -> int -> int -> int -> 'a matrix
 val makeBlocList : 'a matrix -> int -> 'a bloc array
 val troncateImage : 'a image -> int -> 'a image
 

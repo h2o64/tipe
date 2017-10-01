@@ -66,19 +66,20 @@ let convolve_matrix (kernel : 'a matrix) (m : 'a matrix) =
 				ret.(i).(j) <- (convolve i j kernel m r)
 			done;
 		done;
-		ret;;
+		(ret : 'a matrix);;
 
 (* Apply filter on an image *)
-let applyFilter matrix kernel = convolve_matrix kernel matrix;;
+let applyFilter (matrix : 'a matrix) (kernel : 'a matrix) =
+			(convolve_matrix kernel matrix : 'a matrix);;
 
 (* Uses Sobel operator *)
 (* https://en.wikipedia.org/wiki/Prewitt_operator *)
 (* https://en.wikipedia.org/wiki/Sobel_operator *)
 let pi = 4. *. atan 1.
-let hX = [|[|1.;0.;-1.|];[|2.;0.;-2.|];[|1.;0.;-1.|]|];; (* Sobel *)
-let hY = [|[|1.;2.;1.|];[|0.;0.;0.|];[|-1.;-2.;-1.|]|];; (* Transposée de gX *)
-(* let hX = [|[|1.;0.;-1.|];[|1.;0.;-1.|];[|1.;0.;-1.|]|];; (* Prewitt *)
-let hY = [|[|1.;1.;1.|];[|0.;0.;0.|];[|-1.;-1.;-1.|]|];; (* Transposée de gX *) *)
+let (hX : float matrix) = [|[|1.;0.;-1.|];[|2.;0.;-2.|];[|1.;0.;-1.|]|];; (* Sobel *)
+let (hY : float matrix) = [|[|1.;2.;1.|];[|0.;0.;0.|];[|-1.;-2.;-1.|]|];; (* Transposée de gX *)
+(* let (hX : float matrix) = [|[|1.;0.;-1.|];[|1.;0.;-1.|];[|1.;0.;-1.|]|];; (* Prewitt *)
+let (hY : float matrix) = [|[|1.;1.;1.|];[|0.;0.;0.|];[|-1.;-1.;-1.|]|];; (* Transposée de gX *) *)
 let getAngles m =
 	let (h,w) = ((Array.length m),(Array.length m.(0))) in
 	let gX = convolve_matrix hX m in
@@ -100,7 +101,7 @@ let getAngleBetween x y =
 
 (* Sum angles and get the sg type *)
 let sumAngles i j (matrix : float matrix) =
-	let error = 10 in (* 20° of error *)
+	let error = 3 in (* 3° of error *)
 	let ret = {x = i ; y = j ; typ = 3} in
 	let deg_of_rad x = int_of_float ((x*.180.)/.pi) in
 	let liste = Array.make 8 0 in
@@ -125,9 +126,10 @@ let sumAngles i j (matrix : float matrix) =
 
 (* Get all the singularity points *)
 let poincare_index image =
-	let blocs = makeBlocList (getAngles image.matrix) 3 in
-	let ret = Array.make_matrix (image.height) (image.width) {x = 0 ; y = 0 ; typ = 3} in
-	let is_border x y = (x = 0) || (x = (image.height - 1)) || (y = 0) || (y = (image.width - 1)) in
+	let blocs =
+		makeBlocList (getAngles (applyFilter (transpose image.matrix) unsharp_masking_kernel)) 3 in (* WARNING: WTF *)
+	let ret = Array.make_matrix (image.width) (image.height) {x = 0 ; y = 0 ; typ = 3} in
+	let is_border x y = (x = 0) || (x = (image.width - 1)) || (y = 0) || (y = (image.height - 1)) in
 	for i = 0 to ((Array.length blocs) - 1) do
 		let (x,y) = (blocs.(i).x,blocs.(i).y) in
 		ret.(x).(y) <-
@@ -144,15 +146,15 @@ let display_sp image =
 	(* open_graph (getFormat image.width image.height); *)
 	open_graph " 800x800"; (* Temporary *)
 	draw_image (make_image image.matrix) 0 0;
-	for i = 0 to (image.height - 1) do
-		for j = 5 to (image.width - 1) do
+	for i = 0 to (image.width - 1) do
+		for j = 5 to (image.height - 1) do
 				if sps.(i).(j).typ < 3 then
 				begin
-					if sps.(i).(j).typ = 0 then set_color red (* Loop *)
+					if sps.(i).(j).typ = 0 then set_color blue (* Loop *)
 					else if sps.(i).(j).typ = 1 then set_color red (* Delta *)
-					else if sps.(i).(j).typ = 2 then set_color red; (* Whorl *)
+					else if sps.(i).(j).typ = 2 then set_color green; (* Whorl *)
 					moveto i j;
-					draw_circle i j 2 (* WARNING: WTF *)
+					draw_circle i j 2
 				end;
 		done;
 	done;
@@ -161,8 +163,8 @@ let display_sp image =
 (* List singularity points *)
 let list_sp image =
 	let sps = poincare_index (imageToGreyScale image) in
-	for i = 0 to (image.height - 1) do (* 5 = kernel width *)
-		for j = 5 to (image.width - 1) do
+	for i = 0 to (image.width - 1) do (* 5 = kernel width *)
+		for j = 5 to (image.height - 1) do
 			if sps.(i).(j).typ < 3 then
 				begin
 					if sps.(i).(j).typ = 0 then print_string "Loop at" (* Loop *)

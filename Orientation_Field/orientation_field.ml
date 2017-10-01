@@ -92,7 +92,7 @@ let getMatrixAv matrix =
 let vectorList matrix =
 	let pi = 4. *. atan 1. in
 	let deg_of_rad x = int_of_float ((x*.180.)/.pi) in
-	let bloc_size = 16 in
+	let bloc_size = 8 in
 	let blocked  = cutInBlocs matrix bloc_size in
 	let (h,w) = (Array.length blocked),(Array.length blocked.(0)) in
 	let vector_array = Array.make (h*w) ({a = (-1,-1) ; b = (-1,-1)}) in
@@ -103,10 +103,10 @@ let vectorList matrix =
 			let deg_av = (abs (deg_of_rad av))/45 in
 			let (x,y) = (i*bloc_size+1,j*bloc_size+1) in (* Co of the middle point of the bloc *)
 			if (deg_av = 0) then vector_array.(i*w+j)<-{a = (-1,-1); b = (-1,-1)}
-			else if ((deg_av mod 4) = 1) then vector_array.(i*w+j)<-{a = (x+1,y-1); b = (x-1,y+1)}
-			else if ((deg_av mod 4) = 2) then vector_array.(i*w+j)<-{a = (x,y-1); b = (x,y+1)}
-			else if ((deg_av mod 4) = 3) then vector_array.(i*w+j)<-{a = (x-1,y-1); b = (x+1,y+1)}
-			else if ((deg_av mod 4) = 0) then vector_array.(i*w+j)<-{a = (x-1,y); b = (x+1,y)}
+			else if ((deg_av mod 4) = 1) then vector_array.(i*w+j)<-{a = (x+(bloc_size/2),y-(bloc_size/2)); b = (x-(bloc_size/2),y+(bloc_size/2))}
+			else if ((deg_av mod 4) = 2) then vector_array.(i*w+j)<-{a = (x,y-(bloc_size/2)); b = (x,y+(bloc_size/2))}
+			else if ((deg_av mod 4) = 3) then vector_array.(i*w+j)<-{a = (x-(bloc_size/2),y-(bloc_size/2)); b = (x+(bloc_size/2),y+(bloc_size/2))}
+			else if ((deg_av mod 4) = 0) then vector_array.(i*w+j)<-{a = (x-(bloc_size/2),y); b = (x+(bloc_size/2),y)}
 		done;
 	done; vector_array;; 
 			
@@ -124,7 +124,7 @@ let drawVectors (vector_array : vector array) =
 
 (* Open image and draw vectors *)
 let display_orient image =
-	let vector_array = vectorList (imageToGreyScale image).matrix in
+	let vector_array = vectorList (transpose (imageToGreyScale image).matrix) in
 	(* open_graph (getFormat image.width image.height); *)
 	open_graph " 800x800"; (* Temporary *)
 	draw_image (make_image image.matrix) 0 0;

@@ -89,3 +89,14 @@ let troncateImage image bloc_size =
 		done;
 	done;
 	{ height = h ; width = w ; matrix = ret };;
+
+(* Transpose a matrix *)
+let transpose (m : 'a matrix)=
+	let n = Array.make_matrix (Array.length m.(0)) (Array.length m) m.(0).(0) in
+	for i = 0 to (Array.length m - 1) do
+		let row_i = m.(i) in
+			for j = 0 to (Array.length row_i - 1) do
+				n.(j).(i) <- row_i.(j)
+			done;
+		done;
+	(n : 'a matrix);;
