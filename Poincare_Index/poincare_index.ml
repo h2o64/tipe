@@ -127,8 +127,8 @@ let sumAngles i j (matrix : float matrix) =
 (* Get all the singularity points *)
 let poincare_index image =
 	let blocs =
-		makeBlocList (getAngles (applyFilter (transpose image.matrix) unsharp_masking_kernel)) 3 in (* WARNING: WTF *)
-	let ret = Array.make_matrix (image.width) (image.height) {x = 0 ; y = 0 ; typ = 3} in
+		makeBlocList (getAngles (applyFilter image.matrix unsharp_masking_kernel)) 3 in (* WARNING: WTF *)
+	let ret = Array.make_matrix (image.height) (image.width) {x = 0 ; y = 0 ; typ = 3} in
 	let is_border x y = (x = 0) || (x = (image.width - 1)) || (y = 0) || (y = (image.height - 1)) in
 	for i = 0 to ((Array.length blocs) - 1) do
 		let (x,y) = (blocs.(i).x,blocs.(i).y) in
@@ -143,18 +143,17 @@ let poincare_index image =
 (* Display singularity points *)
 let display_sp image =
 	let sps = poincare_index (imageToGreyScale image) in
-	(* open_graph (getFormat image.width image.height); *)
-	open_graph " 800x800"; (* Temporary *)
+	open_graph (getFormat image.width image.height);
 	draw_image (make_image image.matrix) 0 0;
-	for i = 0 to (image.width - 1) do
-		for j = 5 to (image.height - 1) do
+	for i = 0 to (image.height - 1) do
+		for j = 5 to (image.width - 1) do
 				if sps.(i).(j).typ < 3 then
 				begin
 					if sps.(i).(j).typ = 0 then set_color blue (* Loop *)
 					else if sps.(i).(j).typ = 1 then set_color red (* Delta *)
 					else if sps.(i).(j).typ = 2 then set_color green; (* Whorl *)
-					moveto i j;
-					draw_circle i j 2
+					moveto j (image.height - i);
+					draw_circle j (image.height - i) 2
 				end;
 		done;
 	done;
@@ -163,8 +162,8 @@ let display_sp image =
 (* List singularity points *)
 let list_sp image =
 	let sps = poincare_index (imageToGreyScale image) in
-	for i = 0 to (image.width - 1) do (* 5 = kernel width *)
-		for j = 5 to (image.height - 1) do
+	for i = 0 to (image.height - 1) do (* 5 = kernel width *)
+		for j = 5 to (image.width - 1) do
 			if sps.(i).(j).typ < 3 then
 				begin
 					if sps.(i).(j).typ = 0 then print_string "Loop at" (* Loop *)
