@@ -16,3 +16,8 @@ val getSurrounding : int -> int -> 'a matrix -> int -> int -> int -> 'a matrix
 val makeBlocList : 'a matrix -> int -> 'a bloc array
 val troncateImage : 'a image -> int -> 'a image
 val transpose : 'a matrix -> 'a matrix
+val getBlocPos : int -> int -> int -> (int * int) * (int * int)
+val createMatrixOfMatrix : int -> int -> int -> 'a -> 'a array array array array
+val cutInBlocs : 'a array array -> int -> 'a array array array array
+val getMatrixAv : float array array -> float
+

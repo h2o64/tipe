@@ -100,3 +100,43 @@ let transpose (m : 'a matrix)=
 			done;
 		done;
 	(n : 'a matrix);;
+
+(* Get pixel position in bloc matrix *)
+let getBlocPos i j bloc_size =
+	let bloc_co = ((i/bloc_size),(j/bloc_size)) in
+	let co_in_bloc = ((i mod bloc_size),(j mod bloc_size)) in
+	(bloc_co,co_in_bloc);;
+
+(* Create 'a array array array array *)
+let createMatrixOfMatrix h w bloc_size a =
+	let ret = ref [||] in
+	for i = 0 to (h-1) do
+		let tmp = ref [||] in
+		for j = 0 to (w-1) do
+			tmp := Array.append !tmp ([|Array.make_matrix bloc_size bloc_size a|]);
+		done;
+		ret := Array.append !ret [|!tmp|];
+	done;!ret;;
+
+(* Make matrix array for each bloc_size*bloc_size blocs *)
+let cutInBlocs matrix bloc_size =
+	let (h,w) = ((Array.length matrix),(Array.length matrix.(0))) in
+	let ret = createMatrixOfMatrix (h/bloc_size) (w/bloc_size)
+					bloc_size matrix.(0).(0) in
+		for i = 0 to (h-1-(h mod bloc_size)) do
+			for j = 0 to (w-1-(w mod bloc_size)) do
+				let ((bloc_x,bloc_y),(x_in_bloc,y_in_bloc)) = getBlocPos i j bloc_size in
+				(ret.(bloc_x).(bloc_y)).(x_in_bloc).(y_in_bloc) <- matrix.(i).(j)
+			done;
+		done;
+		ret;;
+
+(* Get matrix average value *)
+let getMatrixAv matrix =
+	let (h,w) = ((Array.length matrix),(Array.length matrix.(0))) in
+	let ret = ref 0. in
+	for i = 0 to (h-1) do
+		for j = 0 to (w-1) do
+			ret := !ret +. matrix.(i).(j)
+		done;
+	done;(!ret/.(float_of_int (h*w)));;

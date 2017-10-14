@@ -101,7 +101,7 @@ let getAngleBetween x y =
 
 (* Sum angles and get the sg type *)
 let sumAngles i j (matrix : float matrix) =
-	let error = 3 in (* 3° of error *)
+	let error = 15 in (* 15° of error *)
 	let ret = {x = i ; y = j ; typ = 3} in
 	let deg_of_rad x = int_of_float ((x*.180.)/.pi) in
 	let liste = Array.make 8 0 in
