@@ -100,8 +100,7 @@ let getAngleBetween x y =
 	!ret;;
 
 (* Sum angles and get the sg type *)
-let sumAngles i j (matrix : float matrix) =
-	let error = 15 in (* 15° of error *)
+let sumAngles i j (matrix : float matrix) tolerance =
 	let ret = {x = i ; y = j ; typ = 3} in
 	let deg_of_rad x = int_of_float ((x*.180.)/.pi) in
 	let liste = Array.make 8 0 in
@@ -115,62 +114,65 @@ let sumAngles i j (matrix : float matrix) =
 	done;
 	let sum = ref 0 in
 	for m = 0 to 7 do
-		(* if abs (getAngleBetween liste.(m) liste.((m+1) mod 8)) > 90 then
-			(liste.((m+1) mod 8)<-((liste.((m+1) mod 8)) + 180)); *)
+		if abs (getAngleBetween liste.(m) liste.((m+1) mod 8)) > 90 then
+			(liste.((m+1) mod 8)<-((liste.((m+1) mod 8)) + 180));
 		sum := !sum + (getAngleBetween liste.(m) liste.((m+1) mod 8))
 	done;
-	if (abs (!sum - 180)) < error then ret.typ<-(0)
-	else if (abs (!sum + 180)) < error then ret.typ<-(1)
-	else if (abs (!sum - 360)) < error then ret.typ<-(2);
+	if ((180 - tolerance) <= !sum) && (!sum <= (180 + tolerance)) then ret.typ<-(0)
+	else if ((-180 - tolerance) <= !sum) && (!sum <= (-180 + tolerance)) then ret.typ<-(1)
+	else if ((360 - tolerance) <= !sum) && (!sum <= (360 + tolerance)) then ret.typ<-(2);
 	ret;;
 
 (* Get all the singularity points *)
-let poincare_index image =
+let poincare_index matrix tolerance =
+	let (h,w) = ((Array.length matrix),(Array.length matrix.(0))) in
 	let blocs =
-		makeBlocList (getAngles (applyFilter image.matrix unsharp_masking_kernel)) 3 in (* WARNING: WTF *)
-	let ret = Array.make_matrix (image.height) (image.width) {x = 0 ; y = 0 ; typ = 3} in
-	let is_border x y = (x = 0) || (x = (image.width - 1)) || (y = 0) || (y = (image.height - 1)) in
+		makeBlocList (getAngles matrix) 3 in
+	let ret = Array.make_matrix h w {x = 0 ; y = 0 ; typ = 3} in
+	let is_border x y = (x = 0) || (x = (w - 1)) || (y = 0) || (y = (h - 1)) in
 	for i = 0 to ((Array.length blocs) - 1) do
 		let (x,y) = (blocs.(i).x,blocs.(i).y) in
 		ret.(x).(y) <-
 			(if is_border x y then
 				{x = x ; y = y ; typ = 3}
 			else 
-				sumAngles x y (getAngles blocs.(i).matrix))
+				sumAngles x y (getAngles blocs.(i).matrix) tolerance)
 	done;
 	ret;;
 
+(* Divide matrix in unified blocs *)
+let divide_matrix matrix bloc_size =
+	let blocked_matrix = cutInBlocs matrix bloc_size in
+	let (h,w) = ((Array.length blocked_matrix),(Array.length blocked_matrix.(0))) in
+	let ret_matrix = Array.make_matrix h w 0. in
+	for i = 0 to (h - 1) do
+		for j = 0 to (w - 1) do
+			ret_matrix.(i).(j) <- getMatrixAv blocked_matrix.(i).(j)
+		done;
+	done;ret_matrix;;
+
+(* Get circle location *)
+let getCircleLocation i j h bloc_size =
+	let (x,y) = ((i*bloc_size+(bloc_size)/2),(j*bloc_size+(bloc_size)/2)) in
+	((y),(h - x));;
+
 (* Display singularity points *)
-let display_sp image =
-	let sps = poincare_index (imageToGreyScale image) in
-	open_graph (getFormat image.width image.height);
+let display_sp image bloc_size tolerance =
+	let grey_im = imageToGreyScale image in
+	let sps = poincare_index (divide_matrix grey_im.matrix bloc_size) tolerance in
+	(* open_graph (getFormat image.width image.height); *)
+	set_line_width 4;
 	draw_image (make_image image.matrix) 0 0;
-	for i = 0 to (image.height - 1) do
-		for j = 5 to (image.width - 1) do
+	for i = 0 to ((Array.length sps) - 1) do
+		for j = 0 to ((Array.length sps.(0)) - 1) do
 				if sps.(i).(j).typ < 3 then
 				begin
-					if sps.(i).(j).typ = 0 then set_color blue (* Loop *)
-					else if sps.(i).(j).typ = 1 then set_color red (* Delta *)
-					else if sps.(i).(j).typ = 2 then set_color green; (* Whorl *)
-					moveto j (image.height - i);
-					draw_circle j (image.height - i) 2
-				end;
-		done;
-	done;
-	let _ = read_key() in close_graph();;
-
-(* List singularity points *)
-let list_sp image =
-	let sps = poincare_index (imageToGreyScale image) in
-	for i = 0 to (image.height - 1) do (* 5 = kernel width *)
-		for j = 5 to (image.width - 1) do
-			if sps.(i).(j).typ < 3 then
-				begin
-					if sps.(i).(j).typ = 0 then print_string "Loop at" (* Loop *)
-					else if sps.(i).(j).typ = 1 then print_string "Delta at" (* Delta *)
-					else if sps.(i).(j).typ = 2 then print_string "Whorl at"; (* Whorl *)
-					print_string (getFormat i j);
-					print_string "\n";
+					if sps.(i).(j).typ = 0 then set_color red (* Loop *)
+					else if sps.(i).(j).typ = 1 then set_color green (* Delta *)
+					else if sps.(i).(j).typ = 2 then set_color blue; (* Whorl *)
+					let (x,y) = getCircleLocation i j image.height bloc_size in
+					moveto x y;
+					draw_circle x y (bloc_size/2)
 				end;
 		done;
 	done;;
@@ -182,4 +184,17 @@ let filter_test image kernel =
 	let last = matrixApply rgb_of_greyscale m in
 	open_graph (getFormat image.width image.height);
 	dessiner_image last;;
-	
+
+let blockedToFull h w bloc_size matrix =
+	let ret = Array.make_matrix h w 255. in
+	for i = 0 to ((h - 1) - (h mod bloc_size)) do
+		for j = 0 to ((w - 1) - (w mod bloc_size)) do
+			ret.(j).(j) <- matrix.(i/bloc_size).(j/bloc_size)
+		done;
+	done;ret;;
+
+let displayAnyMatrix matrix =
+	let (h,w) = ((Array.length matrix),(Array.length matrix.(0))) in
+	let last = matrixApply rgb_of_greyscale matrix in
+	open_graph (getFormat w h);
+	dessiner_image last;;
