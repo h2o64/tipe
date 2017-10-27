@@ -66,7 +66,7 @@ module Poincare : POINCARE =
 		let display_sp image bloc_size tolerance =
 			let grey_im = Images.imageToGreyScale image in
 			let sps = poincare_index grey_im.matrix bloc_size tolerance in
-			(* open_graph (getFormat image.width image.height); *)
+			open_graph (Images.getFormat image.width image.height);
 			set_line_width 4;
 			draw_image (make_image image.matrix) 0 0;
 			for i = 1 to ((Array.length sps) - 1) do

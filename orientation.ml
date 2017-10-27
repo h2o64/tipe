@@ -1,14 +1,16 @@
 module type ORIENTATION =
-  sig
+	sig
 		val pi : float
-		val hX : float Images.matrix
 		val hY : float Images.matrix
+		val hX : float Images.matrix
 		val getAngles : float Images.matrix -> int -> float Images.matrix
+		val double_int_of_float : float * float -> int * int
 		val getCircleLocation : int -> int -> int -> int -> int * int
+		val getStartEndLine : int -> int -> int -> float -> (int * int) * (int * int)
 		val vector_field : Graphics.color Images.image -> int -> unit
-  end;;
+	end;;
 
-module Orientation : ORIENTATION = 
+module Orientation : ORIENTATION =
   struct
 		(* Uses Sobel operator *)
 		(* https://en.wikipedia.org/wiki/Prewitt_operator *)
@@ -45,37 +47,48 @@ module Orientation : ORIENTATION =
 				i := !i + bloc_size;
 			done;ret;;
 
-		(* Get line coordonates *)
-		let getStartEndLine x y teta bloc_size =
-			(* Descrete values : multiples of 45° *)
-			let deg_of_rad x = int_of_float ((x*.180.)/.pi) in
-			let deg = (abs (deg_of_rad teta))/45 in
-			let w = bloc_size/2 in
-			print_string "\ndeg = ";
-			print_int (deg*45);
-			if ((deg mod 4) = 0) then (x,y+w,x,y-w)
-			else if ((deg mod 4) = 1) then (x+w,y+w,x-w,y-w)
-			else if ((deg mod 4) = 2) then (x-w,y,x+w,y)
-			else if ((deg mod 4) = 3) then (x-w,y+w,x+w,y-w)
-			else (0,0,0,0);;
+		(* Convert a double of float to a double of int *)
+		let double_int_of_float (a,b) = (int_of_float a,int_of_float b);;
 
 		(* Get circle location *)
 		let getCircleLocation i j h bloc_size =
 			let (x,y) = ((i*bloc_size+(bloc_size/2)),(j*bloc_size+(bloc_size/2))) in
 			((y),(h - x));;
 
+		(* Get line coordonates *)
+		let getStartEndLine x y bloc_size tang =
+			let w = float_of_int bloc_size in
+			let h_w = (w/.2.) in
+			let i = float_of_int x in
+			let j = float_of_int y in
+			if (-1. <= tang) && (tang <= 1.) then
+				let a = (i, (-1.) *. h_w *. tang +. j +. h_w) in
+				let b = (i +. w, h_w *. tang +. j +. h_w) in
+				((double_int_of_float a),(double_int_of_float b));
+			else
+				let a = (i +. h_w +. w/.(2. *. tang), j +. h_w) in
+				let b = (i +. h_w -. w/.(2. *. tang), j -. h_w) in
+				((double_int_of_float a),(double_int_of_float b));;
+
 		(* Display vector field *)
 		let vector_field img bloc_size =
 			let grey_im = Images.imageToGreyScale img in
-			let angles = getAngles grey_im.matrix bloc_size in
-			set_line_width 2;
+			let angles = getAngles grey_im.matrix (bloc_size/4) in
+			open_graph (Images.getFormat img.width img.height);
+			set_line_width 1;
 			set_color red;
 			draw_image (make_image img.matrix) 0 0;
-			for i = 0 to ((Array.length angles)-1) do
-				for j = 0 to ((Array.length angles.(0))-1) do
-					let (x,y) = getCircleLocation i j img.height bloc_size in
-					let (x1,y1,x2,y2) = (getStartEndLine x y angles.(i).(j) bloc_size) in
-					draw_segments [|x1,y1,x2,x2|];
+			let i = ref 1 in
+			while !i < grey_im.height do
+				let j = ref 1 in
+				while !j < grey_im.width do
+					let tang = tan angles.(!i-1/(bloc_size/4)).(!j-1/(bloc_size/4)) in
+					let ((x0,y0),(x1,y1)) = (getStartEndLine !i !j (bloc_size/4) tang) in
+					let (a,b) = getCircleLocation x0 y0 grey_im.height (bloc_size/4) in
+					let (c,d) = getCircleLocation x1 y1 grey_im.height (bloc_size/4) in
+					draw_segments [|(a,b,c,d)|];
+					j := !j + (bloc_size/4);
 				done;
+				i := !i + (bloc_size/4);
 			done;;
 	end
