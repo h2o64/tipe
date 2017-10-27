@@ -4,10 +4,13 @@ module type ORIENTATION =
 		val hY : float Images.matrix
 		val hX : float Images.matrix
 		val getAngles : float Images.matrix -> int -> float Images.matrix
+		val getAngles_vector : float array array -> int -> float Images.matrix
 		val double_int_of_float : float * float -> int * int
 		val getCircleLocation : int -> int -> int -> int -> int * int
 		val getStartEndLine : int -> int -> int -> float -> (int * int) * (int * int)
-		val vector_field : Graphics.color Images.image -> int -> unit
+		val vector_field : (float Images.matrix -> int -> float Images.matrix) ->
+		  Graphics.color Images.image -> int -> unit
+
 	end;;
 
 module Orientation : ORIENTATION =
@@ -47,6 +50,42 @@ module Orientation : ORIENTATION =
 				i := !i + bloc_size;
 			done;ret;;
 
+		(* Based on Donahue and Rokhlin researches *)
+		let getAngles_vector m bloc_size =
+			let (h,w) = ((Array.length m),(Array.length m.(0))) in
+			let (h_new,w_new) = (h-1/bloc_size,w-1/bloc_size) in
+			let ret = Array.make_matrix h_new w_new 0. in
+			let i = ref 1 in
+			while !i < h-1 do
+				let j = ref 1 in
+				while !j < w-1 do
+					let a = ref 0. in
+					let b = ref 0. in
+					let c = ref 0. in
+					for h = -(bloc_size-1)/2 + !i to (bloc_size-1)/2 + !i do
+						for k = -(bloc_size-1)/2 + !j to (bloc_size-1)/2 + !j do
+							let a1 = m.(!i+1).(!j+1) in
+							let a2 = m.(!i+1).(!j-1) in
+							let a3 = m.(!i-1).(!j-1) in
+							let a4 = m.(!i-1).(!j+1) in
+							let a_tmp = ((-1.) *. a1 +. a2 +. a3 -. a4)/.4. in
+							let b_tmp = ((-1.) *. a1 -. a2 +. a3 +. a4)/.4. in
+							a := !a +. a_tmp**2.;
+							b := !b +. a_tmp**2.;
+							c := !c +. a_tmp *. b_tmp;
+						done;
+					done;
+					let tmp = ((!b)-.(!a))/.(2.*.(!c)) in
+					let angle = ref 0. in
+					if !c > 0. then angle := atan (tmp -. (sqrt (tmp**2. +. 1.)))
+					else if !c < 0. then angle := atan (tmp +. (sqrt (tmp**2. +. 1.)))
+					else angle := pi/.2.;
+					ret.((!i-1)/bloc_size).((!j-1)/bloc_size) <- !angle;
+					j := !j + bloc_size;
+				done;
+				i := !i + bloc_size;
+			done;ret;;
+
 		(* Convert a double of float to a double of int *)
 		let double_int_of_float (a,b) = (int_of_float a,int_of_float b);;
 
@@ -71,9 +110,9 @@ module Orientation : ORIENTATION =
 				((double_int_of_float a),(double_int_of_float b));;
 
 		(* Display vector field *)
-		let vector_field img bloc_size =
+		let vector_field methode img bloc_size =
 			let grey_im = Images.imageToGreyScale img in
-			let angles = getAngles grey_im.matrix (bloc_size/4) in
+			let angles = methode grey_im.matrix (bloc_size/4) in
 			open_graph (Images.getFormat img.width img.height);
 			set_line_width 1;
 			set_color red;
