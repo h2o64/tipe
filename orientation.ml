@@ -15,28 +15,34 @@ module Orientation : ORIENTATION =
 		(* https://en.wikipedia.org/wiki/Sobel_operator *)
 		let pi = 4. *. atan 1.
 		 (* Sobel *)
-		let (hX : float Images.matrix) = [|[|1.;0.;-1.|];[|2.;0.;-2.|];[|1.;0.;-1.|]|];;
-		let (hY : float Images.matrix) = [|[|1.;2.;1.|];[|0.;0.;0.|];[|-1.;-2.;-1.|]|];;
+		(* let (hX : float Images.matrix) = [|[|1.;0.;-1.|];[|2.;0.;-2.|];[|1.;0.;-1.|]|];;
+		let (hY : float Images.matrix) = [|[|1.;2.;1.|];[|0.;0.;0.|];[|-1.;-2.;-1.|]|];; *)
+		let (hY : float Images.matrix) = [|[|-1.;0.;1.|];[|-2.;0.;2.|];[|-1.;0.;1.|]|];;
+		let (hX : float Images.matrix) = [|[|-1.;-2.;-1.|];[|0.;0.;0.|];[|1.;2.;1.|]|];;
 		(* Based of Kass and Witkin (1987) researches *)
 		let getAngles m bloc_size =
 			let (h,w) = ((Array.length m),(Array.length m.(0))) in
-			let (h_new,w_new) = ((h-(h mod bloc_size))/bloc_size,(w-(w mod bloc_size))/bloc_size) in
+			let (h_new,w_new) = (h-1/bloc_size,w-1/bloc_size) in
 			let ret = Array.make_matrix h_new w_new 0. in
-			for i = 0 to (h_new-1) do
-				for j = 0 to (w_new-1) do
-					let (global_x,global_y) = ((i/bloc_size)+(bloc_size/2),(j/bloc_size)+(bloc_size/2)) in
+			let i = ref 1 in
+			while !i < h do
+				let j = ref 1 in
+				while !j < w do
 					let num = ref 0. in
 					let dem = ref 0. in
-					for h = -bloc_size/2 to bloc_size/2 do
-						for k = -bloc_size/2 to bloc_size/2 do
-							let tmp_x = Convolution.convolve (global_x + h) (global_y + k) hX m in
-							let tmp_y = Convolution.convolve (global_x + h) (global_y + k) hY m in
+					for k = !i to (min (!i+bloc_size) (h-1)) do
+						for l = !j to (min (!j+bloc_size) (w-1)) do
+							let tmp_x = Convolution.convolve k l hX m in
+							let tmp_y = Convolution.convolve k l hY m in
 							(num := !num +. (2. *. tmp_x *. tmp_y);
 							dem := !dem +. (tmp_x**2. -. tmp_y**2.));
 						done;
 					done;
-					ret.(i).(j) <- (pi +. (atan2 !num !dem))/.2.;
+					let angle = (pi +. (atan2 !num !dem))/.2. in
+					ret.((!i-1)/bloc_size).((!j-1)/bloc_size) <- angle;
+					j := !j + bloc_size;
 				done;
+				i := !i + bloc_size;
 			done;ret;;
 
 		(* Get line coordonates *)
