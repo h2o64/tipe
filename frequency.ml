@@ -22,7 +22,7 @@ module Frequency =
 			done;
 			(!x/.w);;
 
-		(* Plot the signature *)
+		(* Get the signature *)
 		let get_signatures i j m bloc_size =
 			let signature_k k = signature i j m bloc_size k in
 			let signatures = Array.make (bloc_size*2) (signature_k 0) in
@@ -32,29 +32,12 @@ module Frequency =
 
 		(* Plot the signature *)
 		let plot_signature i j m bloc_size =
-			let x_factor = 15 in
-			let signature_k k = signature i j m bloc_size k in
-			let sign_0 = (int_of_float (signature_k 0)) in
-			let prev = ref (0,sign_0) in
-			let lines = Array.make (bloc_size*2) (0,0,0,sign_0) in
-			let curve = Array.make (bloc_size*2) (0,sign_0,0,sign_0) in
-			let max_height = ref (-1.) in
-			for l = 0 to (bloc_size*2)-1 do
-				let cur_sign = (signature_k l) in
-				let ((a,b),(c,d)) = ((l,0),(l,(int_of_float cur_sign))) in
-				let (e,f) = !prev in
-				lines.(l) <- (a*x_factor,b,c*x_factor,d);
-				curve.(l) <- (e*x_factor,f,c*x_factor,d);
-				prev := (c,d);
-				if cur_sign > !max_height then max_height := cur_sign;
-			done;
-			open_graph (Images.getFormat ((bloc_size*2*15)-1) (int_of_float (!max_height *. 1.5)));
-			set_line_width 2;
-			set_color red;
-			draw_segments lines;
-			set_line_width 3;
-			set_color green;
-			draw_segments curve;;
+			let signatures = get_signatures i j m bloc_size in
+			let int_signatures = Plot.int_of_float_array signatures in
+			close_graph ();
+			open_graph " 1x1";
+			Plot.plot_array (int_signatures,0,15,true,red,"Signature",4,true,0,false,true);
+			Plot.plot_array (int_signatures,1,15,false,green,"Signature",4,false,0,false,false);;
 
 		(* Print FFT results *)
 		let print_fft tab =

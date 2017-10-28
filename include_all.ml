@@ -18,6 +18,7 @@ open Format;;
 #use "convolution.ml";;
 #use "orientation.ml";;
 #use "poincare.ml";;
+#use "plot.ml";;
 #use "fft.ml";;
 #use "frequency.ml";;
 #use "testing.ml";;
