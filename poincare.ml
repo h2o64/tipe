@@ -46,9 +46,9 @@ module Poincare : POINCARE =
 					liste.(next)<-liste.(next)+.pi;);
 				sum := !sum +. getAngleBetween liste.(cur) liste.(next)
 			done;
-			if ((pi -. error) <= !sum) && (!sum <= (pi +. error)) then ret.typ<-(0);
-			if (((-1.)*.pi -. error) <= !sum) && (!sum <= ((-1.)*.pi +. error)) then ret.typ<-(1);
-			if ((2.*.pi -. error) <= !sum) && (!sum <= (2.*.pi +. error)) then ret.typ<-(2);
+			if ((pi -. error) <= !sum) && (!sum <= (pi +. error)) then ret.typ<-(0)
+			else if (((-1.)*.pi -. error) <= !sum) && (!sum <= ((-1.)*.pi +. error)) then ret.typ<-(1)
+			else if ((2.*.pi -. error) <= !sum) && (!sum <= (2.*.pi +. error)) then ret.typ<-(2);
 			ret;;
 
 		(* Get all the singularity points *)

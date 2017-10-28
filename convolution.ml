@@ -1,6 +1,7 @@
 module type CONVOLUTION =
   sig
 		val gaussian_kernel : float Images.matrix
+		val gaussian_special_kernel : float Images.matrix
 		val sharpen_kernel : float Images.matrix
 		val edge1_kernel : float Images.matrix
 		val edge2_kernel : float Images.matrix
@@ -20,6 +21,15 @@ module Convolution : CONVOLUTION =
 		[|0.03415;0.071122;0.090818;0.071122;0.03415|];
 		[|0.026743;0.055697;0.071122;0.055697;0.026743|];
 		[|0.012841;0.026743;0.03415;0.026743;0.012841|];
+		|];;
+		let (gaussian_special_kernel : float Images.matrix) = [| (* Sigma = 9 | Size = 7 *)
+		[|0.019179;0.01978;0.020149;0.020273;0.020149;0.01978;0.019179|];
+		[|0.01978;0.020399;0.02078;0.020908;0.02078;0.020399;0.01978|];
+		[|0.020149;0.02078;0.021168;0.021299;0.021168;0.02078;0.020149|];
+		[|0.020273;0.020908;0.021299;0.02143;0.021299;0.020908;0.020273|];
+		[|0.020149;0.02078;0.021168;0.021299;0.021168;0.02078;0.020149|];
+		[|0.01978;0.020399;0.02078;0.020908;0.02078;0.020399;0.01978|];
+		[|0.019179;0.01978;0.020149;0.020273;0.020149;0.01978;0.019179|];
 		|];;
 		let (sharpen_kernel : float Images.matrix) = [|
 		[|0.;-1.;0.|];

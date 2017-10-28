@@ -16,8 +16,8 @@ module Frequency =
 			let angle = angles.((i-1)/bloc_size).((j-1)/bloc_size) in
 			let (y,z) = (float_of_int i,float_of_int j) in
 			for d = 0 to bloc_size-1 do
-				let u = y +. ((float_of_int d) -. (w/.2.)) *. (cos angle) +. ((float_of_int k) -. 1./.2.) in
-				let v = z +. ((float_of_int d) -. (w/.2.)) *. (sin angle) -. ((float_of_int k) -. 1./.2.) in
+				let u = y +. ((float_of_int d) -. (w/.2.)) *. (cos angle) +. ((float_of_int k) -. 1./.2.) *. (sin angle) in
+				let v = z +. ((float_of_int d) -. (w/.2.)) *. (sin angle) -. ((float_of_int k) -. 1./.2.) *. (cos angle) in
 				x := !x +. m.(int_of_float u).(int_of_float v);
 			done;
 			(!x/.w);;
@@ -26,7 +26,7 @@ module Frequency =
 		let get_signatures i j m bloc_size =
 			let signature_k k = signature i j m bloc_size k in
 			let signatures = Array.make (bloc_size*2) (signature_k 0) in
-			for l = 1 to (bloc_size*2)-1 do
+			for l = 0 to (bloc_size*2)-1 do
 				signatures.(l)<-signature_k l;
 			done;signatures;;
 
@@ -39,7 +39,7 @@ module Frequency =
 			let lines = Array.make (bloc_size*2) (0,0,0,sign_0) in
 			let curve = Array.make (bloc_size*2) (0,sign_0,0,sign_0) in
 			let max_height = ref (-1.) in
-			for l = 1 to (bloc_size*2)-1 do
+			for l = 0 to (bloc_size*2)-1 do
 				let cur_sign = (signature_k l) in
 				let ((a,b),(c,d)) = ((l,0),(l,(int_of_float cur_sign))) in
 				let (e,f) = !prev in
@@ -63,7 +63,17 @@ module Frequency =
 			printf "@]@\n";;
 
 		(* Get signature's fourrier transform *)
-		let fft_signature i j m bloc_size offset limit_height =
+		(* NOTE: The 1st FFT's element is the DC, so ignored *)
+		let fft_signature i j m bloc_size =
+			let signatures = get_signatures i j m bloc_size in
+			let complex_signatures = FFT.complex_array_of_array signatures in
+			let fft_signatures = FFT.fft complex_signatures in
+			let ret = Array.make (bloc_size*2) 0. in
+			for l = 1 to (bloc_size*2)-1 do
+				let norme = norm fft_signatures.(l) in ret.(l)<-norme
+			done;ret;;
+
+		let plot_fft_signature i j m bloc_size offset limit_height =
 			let signatures = get_signatures i j m bloc_size in
 			let complex_signatures = FFT.complex_array_of_array signatures in
 			let fft_signatures = FFT.fft complex_signatures in
@@ -116,7 +126,7 @@ module Frequency =
 				(* Print pointer location *)
 				draw_circle i j (bloc_size/2);
 				(* Display FFT *)
-				let (a,_) = fft_signature i j grey_im.matrix bloc_size img.width img.height in
+				let (a,_) = plot_fft_signature i j grey_im.matrix bloc_size img.width img.height in
 				(* Display ridge frequency *)
 				let x_text = (((bloc_size*2*x_factor)-1)/2 + img.width) in
 				let y_text = (int_of_float ((3./.4.) *. (float_of_int img.height))) in
@@ -124,4 +134,66 @@ module Frequency =
 				draw_string (String.concat "" ["Ridge Frequency = ";string_of_int a]);
 			done;;
 
+		(* Tuple printer *)
+		let pp_int_pair (x,y) =
+			printf "(%d,%f)" x y;;
+
+		(* Get ridge frequency of a power spectrum *)
+		let getFrequency spectrum =
+			let maxi = ref (-1,-1.) in
+			for i = 1 to ((Array.length spectrum)-1) do
+				let (x,y) = !maxi in
+				if spectrum.(i) > y then (maxi := (i,spectrum.(i)));
+			done;
+			let (x,y) = !maxi in (1./.(float_of_int x));;
+
+		(* Check spectrum's validity - If there's peaks *)
+		let isvalid spectrum b =
+			let count = ref 0 in
+			let i = ref 1 in
+			let records = Array.make 2 (-1,-1.) in
+			while not (!count = 2) do
+				let (a,b) = records.(!count) in
+				if spectrum.(!i) > b then
+					(records.(!count) <- (!i,spectrum.(!i));
+					spectrum.(!i) <- (-1.);
+					count := !count+1;
+					i := 1)
+				else i := !i + 1
+			done;
+			let ret = ref false in
+			let (a,_) = records.(1) in
+			for j = 1 to ((Array.length spectrum)-1) do
+				if spectrum.(j) *. b >= (float_of_int a) then ret := true
+			done;
+			!ret;;
+
+		(* Get W(i,j) from spectrum of w(i,j) window *)
+		let w_barre spectrum =
+			let freq = getFrequency spectrum in
+			if (freq < (1./.3.)) || (freq > (1./.25.)) then -1.
+			else if isvalid spectrum 2. then 1.
+			else freq;;
+
+		(* Frequency interpolation *)
+		let frequency_interpolation i j m bloc_size =
+			let mu x = if x < 0. then 0. else x in
+			let sigma x = if x < 0. then 0. else float_of_int (bloc_size*2) in
+			let spect = ref (fft_signature i j m bloc_size) in
+			let w_cur = ref (w_barre !spect) in
+			if !w_cur > 0. then !w_cur
+			else
+				(let num = ref 0. in
+				let dem = ref 0. in
+				for u = -3 to 3 do
+					for v = -3 to 3 do
+						let gaussian = Convolution.convolve i j Convolution.gaussian_special_kernel m in
+						spect := (fft_signature (i - u*bloc_size) (j - v*bloc_size) m bloc_size);
+						w_cur := (w_barre !spect);
+						num := !num +. gaussian *. (mu !w_cur);
+						dem := !dem +. gaussian *. (sigma !w_cur+.1.);
+						print_float !num;
+					done;
+				done;
+				(!num /. !dem));
 	end
