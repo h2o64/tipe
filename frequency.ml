@@ -56,66 +56,32 @@ module Frequency =
 				let norme = norm fft_signatures.(l) in ret.(l)<-norme
 			done;ret;;
 
-		let plot_fft_signature i j m bloc_size offset limit_height =
-			let signatures = get_signatures i j m bloc_size in
-			let complex_signatures = FFT.complex_array_of_array signatures in
-			let fft_signatures = FFT.fft complex_signatures in
-			let x_factor = 15 in
-			let lines = Array.make (bloc_size*2) (0,0,0,0) in
-			let pic = ref (-1,-1.) in
-			for l = 1 to (bloc_size*2)-1 do
-				let norme = norm fft_signatures.(l) in
-				let (_,a) = !pic in
-				if a < norme then pic := (l,norme);
-				lines.(l)<-(offset+l*x_factor,0,offset+l*x_factor,int_of_float norme)
-			done;
-			let (a,max_height) = !pic in
-			(* Adjust height to the limit *)
-			let y_factor =
-				let tmp = (int_of_float max_height)/limit_height in
-				if tmp > 0 then tmp
-				else 1 in
-			for l = 1 to (bloc_size*2)-1 do
-				let (x0,y0,x1,y1) = lines.(l) in
-				lines.(l)<-(x0,y0/y_factor,x1,y1/y_factor);
-			done;
-			print_string "\nRidge Frequency = ";
-			print_int a;
-			print_string "\n";
-			set_line_width 2;
-			set_color red;
-			(* Clear graph *)
-			clear_graph ();
-			draw_segments lines;
-			!pic;;
+		(* Plot the signature *)
+		let plot_fft_signature i j m bloc_size =
+			let fft_signatures = fft_signature i j m bloc_size in
+			let int_fft_signatures = Plot.int_of_float_array fft_signatures in
+			close_graph ();
+			open_graph " 1x1";
+			Plot.plot_array (int_fft_signatures,0,15,true,red,"FFT Signature",4,true,0,false,true);;
 
 		(* Interactive signature *)
 		let interactive_signature img bloc_size =
-			let x_factor = 15 in
 			let grey_im = Images.imageToGreyScale img in
-			let width = img.width+((bloc_size*2*x_factor)-1) in
-			open_graph (Images.getFormat width img.height);
-			auto_synchronize true;
-			set_line_width 4;
-			while true do
-				let (i,j) = (mouse_pos ()) in
-				(* Clear graph *)
-				draw_image (make_image img.matrix) 0 0;
-				(* Print mouse co *)
-				print_string "(i,j) = ";
-				print_int i;
-				print_string ";";
-				print_int j;
-				(* Print pointer location *)
-				draw_circle i j (bloc_size/2);
-				(* Display FFT *)
-				let (a,_) = plot_fft_signature i j grey_im.matrix bloc_size img.width img.height in
-				(* Display ridge frequency *)
-				let x_text = (((bloc_size*2*x_factor)-1)/2 + img.width) in
-				let y_text = (int_of_float ((3./.4.) *. (float_of_int img.height))) in
-				moveto x_text y_text;
-				draw_string (String.concat "" ["Ridge Frequency = ";string_of_int a]);
-			done;;
+			let fft_signatures = fft_signature 100 100 grey_im.matrix bloc_size in
+			let int_fft_signatures = Plot.int_of_float_array fft_signatures in
+			close_graph (); (* Close any existing graph *)
+			open_graph (Images.getFormat img.width img.height);
+			draw_image (make_image img.matrix) 0 0;
+			Plot.plot_array (int_fft_signatures,img.width,15,true,red,"FFT Signature",4,true,0,true,true);
+	    let _ = read_key() in
+				while true do
+					let (i,j) = Plot.plot_mouse bloc_size red 4 in
+					let fft_signatures = fft_signature i j grey_im.matrix bloc_size in
+					let int_fft_signatures = Plot.int_of_float_array fft_signatures in
+					clear_graph (); (* Clear *)
+					draw_image (make_image img.matrix) 0 0;
+					Plot.plot_array (int_fft_signatures,img.width,15,true,red,"FFT Signature",4,false,0,true,true);
+				done;;
 
 		(* Tuple printer *)
 		let pp_int_pair (x,y) =

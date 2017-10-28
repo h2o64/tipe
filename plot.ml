@@ -57,19 +57,17 @@ module Plot : PLOT =
 			set_line_width line_width;
 			set_color color;
 			draw_segments points;
-			(* Draw the points *)
-			if bars && showHighest then (
-				let text_bar = 20 in
-				let (cur_x,cur_y) = (size_x (),size_y ()) in
-				let x_text = (cur_x/2)-50 in
-				let y_text = cur_y + (text_bar/2) - 3 in
-				if doResize then resize_window cur_x (cur_y + text_bar);
-				moveto x_text y_text;
-				draw_string (String.concat "" ["Ridge Frequency = ";string_of_int (x.(max_ind)+1)]));
-			draw_segments points;
 			(if not (color = blue) then set_color blue
 			else set_color green);
-			if bars && showHighest then draw_segments [|x.(max_ind)*x_factor+(!x_old),0,!x_old+x.(max_ind)*x_factor,max_val|];;
+			if showHighest then
+				let text_bar = 20 in
+				let (cur_x,cur_y) = (size_x (),size_y ()) in
+				let x_text = (((cur_x - !x_old)/2)-50) + !x_old in
+				let y_text = cur_y - (text_bar/2) - 10 in
+				if doResize then resize_window cur_x (cur_y + text_bar);
+				draw_segments [|x.(max_ind)*x_factor+(!x_old),0,!x_old+x.(max_ind)*x_factor,max_val|];
+				moveto x_text y_text;
+				draw_string (String.concat "" ["Ridge Frequency = ";string_of_int (x.(max_ind)+1)]);;
 
 		(* float array to int array *)
 		let int_of_float_array tab = Array.map int_of_float tab;;
