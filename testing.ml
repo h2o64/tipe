@@ -9,7 +9,7 @@ module type TESTING =
 module Testing : TESTING = 
   struct
 		(* Open image to analyse *)
-		let test_image = Images.import_image "Images/fingerprint.jpg"
+		let test_image = Images.import_image "Images/fingerprint2.jpg"
 
 		let filter_test image kernel =
 			let bw_img = Images.imageToGreyScale image in

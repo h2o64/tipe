@@ -11,10 +11,13 @@
 open Graphics;;
 open Unix;;
 open Image_magick;;
+open Format;;
 
 (* Open modules *)
 #use "images.ml";;
 #use "convolution.ml";;
 #use "orientation.ml";;
 #use "poincare.ml";;
+#use "fft.ml";;
+#use "frequency.ml";;
 #use "testing.ml";;

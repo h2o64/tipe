@@ -1,8 +1,4 @@
 (** fft.ml --- Cooley-Tukey fast Fourier transform algorithm *)
-
-open Format
-open Complex
-
 module type FFT_TYPE =
   sig
 		val get_n_bits : int -> int
@@ -14,11 +10,15 @@ module type FFT_TYPE =
 		val make_twiddle_factors : int -> Complex.t array
 		val fft : Complex.t array -> Complex.t array
 		val ifft : Complex.t array -> Complex.t array
+		val complex_array_of_array : float array -> Complex.t array
 		val main : unit -> unit
 	end;;
 
 module FFT : FFT_TYPE =
   struct
+
+		open Complex;;
+
 		(** [get_n_bits n] returns the number of bits of [n]. *)
 		let get_n_bits =
 			let rec aux n i =
@@ -84,6 +84,7 @@ module FFT : FFT_TYPE =
 			printf "IFFT =@\n  @[";
 			Array.iteri (fun i zi -> printf "[%d] %f %+fi@\n" i zi.re zi.im) z;
 			printf "@]@."
-end
 
+		let complex_array_of_array x = Array.map (fun x -> { re = x; im = 0.0 }) x;;
+end
 (* let () = main () *)
