@@ -73,7 +73,7 @@ module Frequency =
 			open_graph (Images.getFormat img.width img.height);
 			draw_image (make_image img.matrix) 0 0;
 			Plot.plot_array (int_fft_signatures,img.width,15,true,red,"FFT Signature",4,true,0,true,true);
-	    let _ = read_key() in
+			let _ = read_key() in
 				while true do
 					let (i,j) = Plot.plot_mouse bloc_size red 4 in
 					let fft_signatures = fft_signature i j grey_im.matrix bloc_size in

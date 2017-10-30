@@ -18,7 +18,12 @@ module Poincare : POINCARE =
 		type sp = { mutable x : int ; mutable y : int ; mutable typ : int };;
 
 		(* Get the angle between two angles *)
-		let getAngleBetween x y = pi -. abs_float (abs_float ((x -. y) -. pi));;
+		let getAngleBetween x y =
+			let ret = ref (x-.y) in
+			let signum p = if (p > 0.) then (-1.) else 1. in
+			if ((abs_float !ret) > pi) then
+				ret := (-1.) *. (signum !ret) *. (2.*.pi -. (abs_float !ret));
+			!ret;;
 
 		(* Make a array from a matrix *)
 		(* NOTE: Only 3x3 *)
@@ -73,9 +78,9 @@ module Poincare : POINCARE =
 				for j = 1 to ((Array.length sps.(0)) - 1) do
 						if sps.(i).(j).typ < 3 then
 						begin
-							if sps.(i).(j).typ = 0 then set_color red; (* Loop *)
-							if sps.(i).(j).typ = 1 then set_color green; (* Delta *)
-							if sps.(i).(j).typ = 2 then set_color blue; (* Whorl *)
+							if sps.(i).(j).typ = 0 then set_color red (* Loop *)
+							else if sps.(i).(j).typ = 1 then set_color green (* Delta *)
+							else if sps.(i).(j).typ = 2 then set_color blue; (* Whorl *)
 							let (x,y) = Orientation.getCircleLocation i j image.height bloc_size in
 							moveto x y;
 							draw_circle x y (bloc_size/2)
