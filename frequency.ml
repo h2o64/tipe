@@ -45,14 +45,26 @@ module Frequency =
 			Array.iteri (fun i yi -> printf "[%d] %f %+fi@\n" i yi.re yi.im) tab;;
 			printf "@]@\n";;
 
+		(* Remove average value from an array *)
+		let removeDC tab =
+			let n = Array.length tab in
+			let av = ref (0.) in
+			for i = 0 to (n-1) do
+				av := tab.(i) +. !av
+			done;
+			av := (!av /. (float_of_int n));
+			for j = 0 to (n-1) do
+				tab.(j)<-(tab.(j) -. !av);
+			done;;
+
 		(* Get signature's fourrier transform *)
-		(* NOTE: The 1st FFT's element is the DC, so ignored *)
 		let fft_signature i j m bloc_size =
 			let signatures = get_signatures i j m bloc_size in
+			removeDC signatures;
 			let complex_signatures = FFT.complex_array_of_array signatures in
 			let fft_signatures = FFT.fft complex_signatures in
 			let ret = Array.make (bloc_size*2) 0. in
-			for l = 1 to (bloc_size*2)-1 do
+			for l = 0 to (bloc_size*2)-1 do
 				let norme = norm fft_signatures.(l) in ret.(l)<-norme
 			done;ret;;
 
@@ -90,7 +102,7 @@ module Frequency =
 		(* Get ridge frequency of a power spectrum *)
 		let getFrequency spectrum =
 			let maxi = ref (-1,-1.) in
-			for i = 1 to ((Array.length spectrum)-1) do
+			for i = 0 to ((Array.length spectrum)-1) do
 				let (x,y) = !maxi in
 				if spectrum.(i) > y then (maxi := (i,spectrum.(i)));
 			done;
@@ -112,7 +124,7 @@ module Frequency =
 			done;
 			let ret = ref false in
 			let (a,_) = records.(1) in
-			for j = 1 to ((Array.length spectrum)-1) do
+			for j = 0 to ((Array.length spectrum)-1) do
 				if spectrum.(j) *. b >= (float_of_int a) then ret := true
 			done;
 			!ret;;
