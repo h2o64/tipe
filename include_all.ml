@@ -20,5 +20,5 @@ open Format;;
 #use "poincare.ml";;
 #use "plot.ml";;
 #use "fft.ml";;
-#use "frequency.ml";;
 #use "testing.ml";;
+#use "frequency.ml";;
