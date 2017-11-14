@@ -1,0 +1,13 @@
+(* Vector Field *)
+Orientation.vector_field Orientation.getAngles Testing.test_image 16;;
+Orientation.vector_field Orientation.getAngles_vector Testing.test_image 16;;
+
+(* Poincare *)
+Poincare.display_sp Testing.test_image 16 25 Poincare.getAngleBetween;;
+Poincare.display_sp Testing.test_image 16 25 Poincare.getAngleBetween_bis;;
+
+(* Frequency *)
+let grey_test = Images.imageToGreyScale Testing.test_image;;
+Frequency.plot_signature 200 200 grey_test.matrix 16;;
+Frequency.interactive_signature Testing.test_image 16;;
+
