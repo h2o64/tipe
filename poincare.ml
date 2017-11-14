@@ -1,14 +1,16 @@
 module type POINCARE =
   sig
-		val pi : float
-		type sp = { mutable x : int; mutable y : int; mutable typ : int; }
-		val getAngleBetween : float -> float -> float
-		val cells : (int * int) array
-		val array_of_matrix : float Images.matrix -> float array
-		val allowance : int -> float
-		val sumAngles : int -> int -> float array array -> int -> sp
-		val poincare_index : float Images.matrix -> int -> int -> sp array array
-		val display_sp : Graphics.color Images.image -> int -> int -> unit
+    val pi : float
+    type sp = { mutable x : int; mutable y : int; mutable typ : int; }
+    val getAngleBetween : float -> float -> float
+    val getAngleBetween_bis : float -> float -> float
+    val cells : (int * int) array
+    val array_of_matrix : float array array -> float array
+    val allowance : int -> float
+    val sumAngles : int -> int -> float array array -> int -> sp
+    val poincare_index :
+      float Images.matrix -> int -> int -> 'a -> sp array array
+    val display_sp : Graphics.color Images.image -> int -> int -> 'a -> unit
   end;;
 
 module Poincare : POINCARE =
@@ -24,6 +26,9 @@ module Poincare : POINCARE =
 			if ((abs_float !ret) > pi) then
 				ret := (-1.) *. (signum !ret) *. (2.*.pi -. (abs_float !ret));
 			!ret;;
+
+		(* Great - Get the angle between two angles *)
+		let getAngleBetween_bis x y = pi -. abs_float (abs_float ((x -. y) -. pi));;
 
 		(* Make a array from a matrix *)
 		(* NOTE: Only 3x3 *)
@@ -57,7 +62,7 @@ module Poincare : POINCARE =
 			ret;;
 
 		(* Get all the singularity points *)
-		let poincare_index matrix bloc_size tolerance =
+		let poincare_index matrix bloc_size tolerance angle_method =
 			let (h,w) = ((Array.length matrix),(Array.length matrix.(0))) in
 			let blocs = Images.makeBlocList (Orientation.getAngles matrix bloc_size) 3 in
 			let ret = Array.make_matrix h w {x = 0 ; y = 0 ; typ = 3} in
@@ -68,9 +73,9 @@ module Poincare : POINCARE =
 			ret;;
 
 		(* Display singularity points *)
-		let display_sp image bloc_size tolerance =
+		let display_sp image bloc_size tolerance angle_method =
 			let grey_im = Images.imageToGreyScale image in
-			let sps = poincare_index grey_im.matrix bloc_size tolerance in
+			let sps = poincare_index grey_im.matrix bloc_size tolerance angle_method in
 			open_graph (Images.getFormat image.width image.height);
 			set_line_width 4;
 			draw_image (make_image image.matrix) 0 0;
