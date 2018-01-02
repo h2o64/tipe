@@ -114,7 +114,7 @@ module Orientation : ORIENTATION =
 			let grey_im = Images.imageToGreyScale img in
 			let angles = methode grey_im.matrix (bloc_size/4) in
 			open_graph (Images.getFormat img.width img.height);
-			set_line_width 1;
+			set_line_width 2;
 			set_color red;
 			draw_image (make_image img.matrix) 0 0;
 			let i = ref 1 in
