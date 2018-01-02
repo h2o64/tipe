@@ -16,12 +16,8 @@ module Image_Processing =
 				let j = ref 0 in
 				while !j < w do
 					let variance = ref (threshold +. 1.) in
-					let isBorder = ref false in
-					(* Check if we are on the border *)
-					if (h-1) < (!i+bloc_size) then isBorder := true;
-					if (w-1) < (!j+bloc_size) then isBorder := true;
 					(* Process calculation if not on border *)
-					if not !isBorder then
+					if not (((h-1) < (!i+bloc_size)) || ((w-1) < (!j+bloc_size)))  then
 						(let max_h = (!i+bloc_size)-1 in
 						let max_w = (!j+bloc_size)-1 in
 						(* Sum blocs intensities *)
@@ -42,9 +38,9 @@ module Image_Processing =
 								sum := !sum +. ((m.(k).(l) -. mean)**2.);
 							done;
 						done;
-						variance := !sum /. bloc_size_sqrd;
+						variance := !sum /. bloc_size_sqrd);
 					(* Wipe out the backgroud *)
-					if (!variance > threshold) || !isBorder then
+					if (!variance > threshold) then
 						(for k = !i to (min (!i+bloc_size) (h-1)) do
 							for l = !j to (min (!j+bloc_size) (w-1)) do
 								ret.(k).(l) <- m.(k).(l)
