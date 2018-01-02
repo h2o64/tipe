@@ -52,5 +52,34 @@ module Image_Processing =
 			done;
 		ret;;
 
+	(* Image normalisation with histogram equalization *)
+	let normalisation m =
+		let (h,w) = ((Array.length m),(Array.length m.(0))) in
+		(* Get occurence of each grey level *)
+		let occurs = Array.make 256 0 in
+		for i = 0 to (h-1) do
+			for j = 0 to (w-1) do
+				let value = occurs.(int_of_float (m.(i).(j))) in
+				occurs.(int_of_float (m.(i).(j))) <- value + 1;
+			done;
+		done;
+		(* Get the transformation *)
+		let transf = Array.make 256 0. in
+		let size = float_of_int (h*w) in
+		for i = 0 to 255 do
+			let sum = ref 0 in
+			for j = 0 to i do
+				sum := !sum + occurs.(j)
+			done;
+			transf.(i) <- (255. /. size) *. (float_of_int !sum)
+		done;
+		(* Transform the image *)
+		let ret = Array.make_matrix h w 0. in
+		for i = 0 to (h-1) do
+			for j = 0 to (w-1) do
+				ret.(i).(j) <- transf.(int_of_float m.(i).(j))
+			done;
+		done;
+		ret;;
 
 	end
