@@ -66,12 +66,13 @@ module Image_Processing =
 		(* Get the transformation *)
 		let transf = Array.make 256 0. in
 		let size = float_of_int (h*w) in
+		let tmp = (255. /. size) in
 		for i = 0 to 255 do
 			let sum = ref 0 in
 			for j = 0 to i do
 				sum := !sum + occurs.(j)
 			done;
-			transf.(i) <- (255. /. size) *. (float_of_int !sum)
+			transf.(i) <- tmp *. (float_of_int !sum)
 		done;
 		(* Transform the image *)
 		let ret = Array.make_matrix h w 0. in
