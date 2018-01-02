@@ -20,5 +20,7 @@ open Format;;
 #use "poincare.ml";;
 #use "plot.ml";;
 #use "fft.ml";;
+#use "img_proc.ml";;
+#use "minutae.ml";;
 #use "testing.ml";;
 #use "frequency.ml";;
