@@ -88,7 +88,7 @@ module Image_Processing =
 		let kernel = Array.make_matrix size size 0. in
 		for i = 0 to (size-1) do
 			for j = 0 to (size-1) do
-				kernel.(i).(j) <- f (float_of_int (i-size)/.2.) (float_of_int (j-size)/.2.)
+				kernel.(i).(j) <- f (float_of_int (i - size / 2)) (float_of_int (j - size / 2))
 			done;
 		done;
 		kernel;;
@@ -116,7 +116,7 @@ module Image_Processing =
 	let apply_gabor m bloc_size =
 		let (h,w) = ((Array.length m),(Array.length m.(0))) in
 		let ret = Array.make_matrix h w 0. in
-		let angles = Orientation.smoothMyAngles (Orientation.getAngles m bloc_size) in
+		let angles = Orientation.smoothMyAngles (Orientation.getAngles_vector m bloc_size) in
 		let freqs = Frequency.frequency_map m bloc_size in
 		let (h_b,w_b) = ((Array.length angles),(Array.length angles.(0))) in
 		let gauss_kernel = kernelFromFunction 3 gauss in
