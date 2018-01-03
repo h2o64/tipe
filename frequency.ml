@@ -1,8 +1,15 @@
 module type FREQUENCY =
   sig
-    val signature : int -> int -> float array array -> int -> int -> float
+    val signature :
+      int ->
+      int -> float array array -> float array array -> int -> int -> float
     val get_signatures :
       int -> int -> float array array -> int -> float array
+    val createMatrixOfArray : int -> int -> int -> 'a -> 'a array array array
+    val get_signature_map :
+      float array array -> int -> float array array array
+    val average_pics_d : 'a array -> float
+    val frequency_map : float array array -> int -> float array array
     val plot_signature : int -> int -> float array array -> int -> unit
     val print_fft : Complex.t array -> unit
     val removeDC : float array -> unit
@@ -23,11 +30,10 @@ module Frequency : FREQUENCY =
 		open Complex;;
 
 		(* Get the signature of the windows (bloc_size,2*bloc_size) centered at (i,j) *)
-		let signature i j m bloc_size k =
+		let signature i j m angles bloc_size k =
 			let (he,wi) = ((Array.length m),(Array.length m.(0))) in
 			let x = ref 0. in
 			let w = float_of_int bloc_size in
-			let angles = Orientation.getAngles_vector m bloc_size in
 			let angle = angles.((i-1)/bloc_size).((j-1)/bloc_size) in
 			let (y,z) = (float_of_int i,float_of_int j) in
 			for d = 0 to bloc_size-1 do
@@ -42,11 +48,79 @@ module Frequency : FREQUENCY =
 
 		(* Get the signature *)
 		let get_signatures i j m bloc_size =
-			let signature_k k = signature i j m bloc_size k in
+			let angles = Orientation.getAngles_vector m bloc_size in
+			let signature_k k = signature i j m angles bloc_size k in
 			let signatures = Array.make (bloc_size*2) (signature_k 0) in
 			for l = 0 to (bloc_size*2)-1 do
 				signatures.(l)<-signature_k l;
 			done;signatures;;
+
+		(* Create 'a array array array *)
+		let createMatrixOfArray h w bloc_size a =
+			let ret = ref [||] in
+			for i = 0 to (h-1) do
+				let tmp = ref [||] in
+				for j = 0 to (w-1) do
+					tmp := Array.append !tmp ([|Array.make bloc_size a|]);
+				done;
+				ret := Array.append !ret [|!tmp|];
+			done;!ret;;
+
+		(* Get signature map *)
+		let get_signature_map m bloc_size =
+			let (h,w) = ((Array.length m),(Array.length m.(0))) in
+			let (h_new,w_new) = (h-1/bloc_size,w-1/bloc_size) in
+			let ret = createMatrixOfArray h_new w_new (bloc_size*2) 0. in
+			let angles = Orientation.getAngles_vector m bloc_size in
+			let i = ref 0 in
+			while !i < h do
+				let j = ref 0 in
+				while !j < w do
+					let signature_k k = signature !i !j m angles bloc_size k in
+					for l = 0 to (bloc_size*2)-1 do
+						ret.((!i-1)/bloc_size).((!j-1)/bloc_size).(l)<-signature_k l;
+					done;
+					j := !j + bloc_size;
+				done;
+				i := !i + bloc_size
+			done;
+			ret;;
+
+		(* Get average pics distance *)
+		let average_pics_d tab =
+			let length = Array.length tab in
+			(* Get all pics *)
+			let pics = ref [||] in
+			for i = 1 to (length-2) do
+				if (tab.(i-1) < tab.(i)) && (tab.(i+1) < tab.(i)) then
+					pics := Array.append !pics [|i|];
+			done;
+			(* Get all distances average *)
+			let nb_pics = (Array.length !pics) in
+			let ret = ref (-1.) in
+			if not (nb_pics = 0) then
+				(let distance = ref 0 in
+				for j = 1 to (nb_pics-1) do
+					distance := !distance + (!pics.(j) - !pics.(j-1)) - 1;
+				done;
+				ret := ((float_of_int !distance) /. (float_of_int (nb_pics))));
+			!ret;;
+
+		(* Get frequency map *)
+		let frequency_map m bloc_size =
+			let sign_map = get_signature_map m bloc_size in
+			let (h,w) = ((Array.length sign_map),(Array.length sign_map.(0))) in
+			let ret = Array.make_matrix h w 0. in
+			for i = 0 to (h-1) do
+				for j = 0 to (w-1) do
+					let tmp = (average_pics_d sign_map.(i).(j)) in
+					(* Ignore too weak values *)
+					if tmp < (10.**(-5.)) then
+						ret.(i).(j) <- (0.)
+					else
+						ret.(i).(j) <- 1. /. tmp;
+				done;
+			done;ret;;
 
 		(* Plot the signature *)
 		let plot_signature i j m bloc_size =

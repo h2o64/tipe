@@ -15,12 +15,12 @@ open Format;;
 
 (* Open modules *)
 #use "images.ml";;
+#use "testing.ml";;
 #use "convolution.ml";;
 #use "orientation.ml";;
 #use "poincare.ml";;
 #use "plot.ml";;
 #use "fft.ml";;
+#use "frequency.ml";;
 #use "img_proc.ml";;
 #use "minutae.ml";;
-#use "testing.ml";;
-#use "frequency.ml";;
