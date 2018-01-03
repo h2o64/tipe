@@ -83,4 +83,55 @@ module Image_Processing =
 		done;
 		ret;;
 
+	(* Kernel from function *)
+	let kernelFromFunction size f =
+		let kernel = Array.make_matrix size size 0. in
+		for i = 0 to (size-1) do
+			for j = 0 to (size-1) do
+				kernel.(i).(j) <- f (float_of_int (i-size)/.2.) (float_of_int (j-size)/.2.)
+			done;
+		done;
+		kernel;;
+
+	(* Generate the Gabor kernel *)
+	let gabor_kernel angle freq bloc_size =
+		let c = cos angle in
+		let s = sin angle in
+		let yangle x y = x*.c +. y*.s in
+		let xangle x y = (-1.) *. x *.s +. y*.c in
+		let xsigma_sqrd = 16. in
+		let ysigma_sqrd = 16. in
+		let funct x y =
+			(-0.5) *. ((((xangle x y)**2.) /. xsigma_sqrd) +. (((yangle x y)**2.) /. ysigma_sqrd)) in
+		let signal x y = cos (2. *. Poincare.pi *. freq *. (xangle x y)) in
+		let mul x y = (exp (funct x y)) *. (signal x y) in
+		(kernelFromFunction bloc_size mul);;
+
+	(* Gauss fonction *)
+	let gauss x y =
+		let sigma = 1. in
+		((1.) /. (2.*.Poincare.pi*.(sigma**2.)))*.exp((-1.)*.((x**2.)+.(y**2.))/.(2. *. (sigma**2.)));;
+
+	(* Apply gabor kernel *)
+	let apply_gabor m bloc_size =
+		let (h,w) = ((Array.length m),(Array.length m.(0))) in
+		let ret = Array.make_matrix h w 0. in
+		let angles = Orientation.getAngles m bloc_size in
+		let freqs = Frequency.frequency_map m bloc_size in
+		let (h_b,w_b) = ((Array.length angles),(Array.length angles.(0))) in
+		let gauss_kernel = kernelFromFunction 3 gauss in
+		let new_freqs = Convolution.convolve_matrix gauss_kernel freqs in
+		for i = 0 to (h_b-1) do
+			for j = 0 to (w_b-1) do
+				let kernel = gabor_kernel angles.(i).(j) new_freqs.(i).(j) bloc_size in
+				for k = 0 to (bloc_size-1) do
+					for l = 0 to (bloc_size-1) do
+						let (x,y) = ((i*bloc_size+k),(j*bloc_size+l)) in
+						if (x < h) && (y < w) then
+							ret.(x).(y) <- (Convolution.convolve x y kernel m);
+					done;
+				done;
+			done;
+		done;
+		ret;;
 	end

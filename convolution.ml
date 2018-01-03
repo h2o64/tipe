@@ -68,7 +68,7 @@ module Convolution : CONVOLUTION =
 				for n = 0 to (r - 1) do
 					(* Use zero-padding to extend the image *)
 					let (a,b) = ((i + m - (r/2)),(j + n - (r/2))) in
-					if not((a < 0) || (b < 0) || (a > (h-1)) || (b > (w-1))) then 
+					if not((a < 0) || (b < 0) || (a > (h-1)) || (b > (w-1))) then
 						tmp := !tmp +.(kernel.(m).(n)*.image_matrix.(a).(b))
 				done;
 			done;
