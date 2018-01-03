@@ -48,7 +48,7 @@ module Frequency : FREQUENCY =
 
 		(* Get the signature *)
 		let get_signatures i j m bloc_size =
-			let angles = Orientation.getAngles_vector m bloc_size in
+			let angles = Orientation.smoothMyAngles (Orientation.getAngles_vector m bloc_size) in
 			let signature_k k = signature i j m angles bloc_size k in
 			let signatures = Array.make (bloc_size*2) (signature_k 0) in
 			for l = 0 to (bloc_size*2)-1 do
@@ -71,7 +71,7 @@ module Frequency : FREQUENCY =
 			let (h,w) = ((Array.length m),(Array.length m.(0))) in
 			let (h_new,w_new) = (h-1/bloc_size,w-1/bloc_size) in
 			let ret = createMatrixOfArray h_new w_new (bloc_size*2) 0. in
-			let angles = Orientation.getAngles_vector m bloc_size in
+			let angles = Orientation.smoothMyAngles (Orientation.getAngles_vector m bloc_size) in
 			let i = ref 0 in
 			while !i < h do
 				let j = ref 0 in

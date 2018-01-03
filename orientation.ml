@@ -5,11 +5,12 @@ module type ORIENTATION =
 		val hX : float Images.matrix
 		val getAngles : float Images.matrix -> int -> float Images.matrix
 		val getAngles_vector : float array array -> int -> float Images.matrix
+		val smoothMyAngles : float array array -> float array array
 		val double_int_of_float : float * float -> int * int
 		val getCircleLocation : int -> int -> int -> int -> int * int
 		val getStartEndLine : int -> int -> int -> float -> (int * int) * (int * int)
 		val vector_field : (float Images.matrix -> int -> float Images.matrix) ->
-		  Graphics.color Images.image -> int -> unit
+		  Graphics.color Images.image -> int -> bool -> unit
 
 	end;;
 
@@ -86,6 +87,21 @@ module Orientation : ORIENTATION =
 				i := !i + bloc_size;
 			done;ret;;
 
+		(* Angle smoothing *)
+		let smoothMyAngles m =
+			let (h,w) = ((Array.length m),(Array.length m.(0))) in
+			let cos_b x = cos (2. *. x) in
+			let sin_b x = sin (2. *. x) in
+			let cos_m = applyFunctMatrix m cos_b in
+			let sin_m = applyFunctMatrix m sin_b in
+			let cos_g = Convolution.convolve_matrix Convolution.gaussian_kernel cos_m in
+			let sin_g = Convolution.convolve_matrix Convolution.gaussian_kernel sin_m in
+			for i = 0 to (h-1) do
+				for j = 0 to (w-1) do
+					cos_g.(i).(j) <- (atan2 sin_g.(i).(j) cos_g.(i).(j)) /. 2.
+				done;
+			done;cos_g;;
+
 		(* Convert a double of float to a double of int *)
 		let double_int_of_float (a,b) = (int_of_float a,int_of_float b);;
 
@@ -110,9 +126,10 @@ module Orientation : ORIENTATION =
 				((double_int_of_float a),(double_int_of_float b));;
 
 		(* Display vector field *)
-		let vector_field methode img bloc_size =
+		let vector_field methode img bloc_size smooth =
 			let grey_im = Images.imageToGreyScale img in
-			let angles = methode grey_im.matrix (bloc_size/4) in
+			let angles = ref (methode grey_im.matrix (bloc_size/4)) in
+			if smooth then angles := (smoothMyAngles !angles);
 			open_graph (Images.getFormat img.width img.height);
 			set_line_width 2;
 			set_color red;
@@ -121,7 +138,7 @@ module Orientation : ORIENTATION =
 			while !i < grey_im.height do
 				let j = ref 1 in
 				while !j < grey_im.width do
-					let tang = tan angles.(!i-1/(bloc_size/4)).(!j-1/(bloc_size/4)) in
+					let tang = tan !angles.(!i-1/(bloc_size/4)).(!j-1/(bloc_size/4)) in
 					let ((x0,y0),(x1,y1)) = (getStartEndLine !i !j (bloc_size/4) tang) in
 					let (a,b) = getCircleLocation x0 y0 grey_im.height (bloc_size/4) in
 					let (c,d) = getCircleLocation x1 y1 grey_im.height (bloc_size/4) in

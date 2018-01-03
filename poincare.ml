@@ -64,7 +64,8 @@ module Poincare : POINCARE =
 		(* Get all the singularity points *)
 		let poincare_index matrix bloc_size tolerance angle_method =
 			let (h,w) = ((Array.length matrix),(Array.length matrix.(0))) in
-			let blocs = Images.makeBlocList (Orientation.getAngles matrix bloc_size) 3 in
+			let blocs =
+				Images.makeBlocList (Orientation.smoothMyAngles (Orientation.getAngles matrix bloc_size)) 3 in
 			let ret = Array.make_matrix h w {x = 0 ; y = 0 ; typ = 3} in
 			for i = 0 to ((Array.length blocs) - 1) do
 				let (x,y) = (blocs.(i).x,blocs.(i).y) in

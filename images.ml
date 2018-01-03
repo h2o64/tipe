@@ -22,6 +22,7 @@ module type IMAGES =
 		val createMatrixOfMatrix : int -> int -> int -> 'a -> 'a array array array array
 		val cutInBlocs : 'a matrix -> int -> 'a array array array array
 		val getMatrixAv : float matrix -> float
+		val applyFunctMatrix : 'a array array -> ('a -> 'b) -> 'b array array
   end;;
 
 module Images : IMAGES = 
@@ -165,4 +166,14 @@ module Images : IMAGES =
 					ret := !ret +. matrix.(i).(j)
 				done;
 			done;(!ret/.(float_of_int (h*w)));;
+
+		(* Apply function on matrix *)
+		let applyFunctMatrix m f =
+			let (h,w) = ((Array.length m),(Array.length m.(0))) in
+			let ret = Array.make_matrix h w (f m.(0).(0)) in
+			for i = 0 to (h-1) do
+				for j = 0 to (w-1) do
+					ret.(i).(j) <- f m.(i).(j);
+				done;
+			done;ret;;
   end
