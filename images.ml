@@ -156,7 +156,7 @@ module Images : IMAGES =
 
 		(* Make matrix array for each bloc_size*bloc_size blocs *)
 		let cutInBlocs matrix bloc_size =
-			let (h,w) = Images.getHW matrix in
+			let (h,w) = getHW matrix in
 			let ret = createMatrixOfMatrix (h/bloc_size) (w/bloc_size)
 							bloc_size matrix.(0).(0) in
 				for i = 0 to (h-1-(h mod bloc_size)) do
@@ -169,7 +169,7 @@ module Images : IMAGES =
 
 		(* Get matrix average value *)
 		let getMatrixAv matrix =
-			let (h,w) = Images.getHW matrix in
+			let (h,w) = getHW matrix in
 			let ret = ref 0. in
 			for i = 0 to (h-1) do
 				for j = 0 to (w-1) do
@@ -179,7 +179,7 @@ module Images : IMAGES =
 
 		(* Apply function on matrix *)
 		let applyFunctMatrix m f =
-			let (h,w) = Images.getHW m in
+			let (h,w) = getHW m in
 			let ret = Array.make_matrix h w (f m.(0).(0)) in
 			for i = 0 to (h-1) do
 				for j = 0 to (w-1) do
@@ -189,8 +189,8 @@ module Images : IMAGES =
 
 		(* Apply function on matrix *)
 		let applyFunctMatrix_d a b f =
-			let (h,w) = Images.getHW a in
-			if not ((h,w) =  Images.getHW b) then failwith "applyFunctMatrix_d: Not same size";
+			let (h,w) = getHW a in
+			if not ((h,w) =  getHW b) then failwith "applyFunctMatrix_d: Not same size";
 			let ret = Array.make_matrix h w (f a.(0).(0) b.(0).(0)) in
 			for i = 0 to (h-1) do
 				for j = 0 to (w-1) do
