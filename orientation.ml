@@ -27,7 +27,7 @@ module Orientation : ORIENTATION =
 		let (hX : float Images.matrix) = [|[|-1.;-2.;-1.|];[|0.;0.;0.|];[|1.;2.;1.|]|];;
 		(* Based of Kass and Witkin (1987) researches *)
 		let getAngles m bloc_size =
-			let (h,w) = ((Array.length m),(Array.length m.(0))) in
+			let (h,w) = Images.getHW m in
 			let (h_new,w_new) = (h-1/bloc_size,w-1/bloc_size) in
 			let ret = Array.make_matrix h_new w_new 0. in
 			let i = ref 1 in
@@ -53,7 +53,7 @@ module Orientation : ORIENTATION =
 
 		(* Based on Donahue and Rokhlin researches *)
 		let getAngles_vector m bloc_size =
-			let (h,w) = ((Array.length m),(Array.length m.(0))) in
+			let (h,w) = Images.getHW m in
 			let (h_new,w_new) = (h-1/bloc_size,w-1/bloc_size) in
 			let ret = Array.make_matrix h_new w_new 0. in
 			let i = ref 1 in
@@ -89,7 +89,7 @@ module Orientation : ORIENTATION =
 
 		(* Angle smoothing *)
 		let smoothMyAngles m =
-			let (h,w) = ((Array.length m),(Array.length m.(0))) in
+			let (h,w) = Images.getHW m in
 			let cos_b x = cos (2. *. x) in
 			let sin_b x = sin (2. *. x) in
 			let cos_m = Images.applyFunctMatrix m cos_b in

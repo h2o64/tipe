@@ -32,7 +32,7 @@ module Testing : TESTING =
 			done;ret;;
 
 		let displayAnyMatrix matrix =
-			let (h,w) = ((Array.length matrix),(Array.length matrix.(0))) in
+			let (h,w) = Images.getHW matrix in
 			let last = Images.matrixApply Images.rgb_of_greyscale matrix in
 			open_graph (Images.getFormat w h);
 			dessiner_image last;;
@@ -65,7 +65,7 @@ module Testing : TESTING =
 			done;!ret;;
 
 		let align_matrix m =
-			let (h,w) = ((Array.length m),(Array.length m.(0))) in
+			let (h,w) = Images.getHW m in
 			let matrix_max = get_matrix_max m in
 			let convert num = (num *. 255.) /. matrix_max in
 			for i = 0 to (h-1) do

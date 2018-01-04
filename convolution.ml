@@ -63,7 +63,7 @@ module Convolution : CONVOLUTION =
 		let convolve i j kernel image_matrix =
 			let tmp = ref 0. in
 			let r = Array.length kernel in (* Kernel is square *)
-			let (h,w) = ((Array.length image_matrix),(Array.length image_matrix.(0))) in
+			let (h,w) = Images.getHW image_matrix in
 			for m = 0 to (r - 1) do
 				for n = 0 to (r - 1) do
 					(* Use zero-padding to extend the image *)
@@ -76,7 +76,7 @@ module Convolution : CONVOLUTION =
 
 		(* Convolve whole matrix *)
 		let convolve_matrix kernel m =
-				let (h,w) = ((Array.length m),(Array.length m.(0))) in
+				let (h,w) = Images.getHW m in
 				let ret = Array.make_matrix h w 0. in
 				for i = 0 to (h - 1) do
 					for j = 0 to (w - 1) do

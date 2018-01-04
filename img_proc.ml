@@ -8,7 +8,7 @@ module Image_Processing =
   struct
 		(* Mean and variance based method of segmentation *)
 		let segmentation m bloc_size threshold =
-			let (h,w) = ((Array.length m),(Array.length m.(0))) in
+			let (h,w) = Images.getHW m in
 			let ret = Array.make_matrix h w 0. in
 			let bloc_size_sqrd = float_of_int (bloc_size*bloc_size) in
 			let i = ref 0 in
@@ -54,7 +54,7 @@ module Image_Processing =
 
 	(* Image normalisation with histogram equalization *)
 	let normalisation m =
-		let (h,w) = ((Array.length m),(Array.length m.(0))) in
+			let (h,w) = Images.getHW m in
 		(* Get occurence of each grey level *)
 		let occurs = Array.make 256 0 in
 		for i = 0 to (h-1) do
@@ -114,11 +114,11 @@ module Image_Processing =
 
 	(* Apply gabor kernel *)
 	let apply_gabor m bloc_size =
-		let (h,w) = ((Array.length m),(Array.length m.(0))) in
+		let (h,w) = Images.getHW m in
 		let ret = Array.make_matrix h w 0. in
 		let angles = Orientation.smoothMyAngles (Orientation.getAngles_vector m bloc_size) in
 		let freqs = Frequency.frequency_map m bloc_size in
-		let (h_b,w_b) = ((Array.length angles),(Array.length angles.(0))) in
+		let (h_b,w_b) = Images.getHW angles in
 		let gauss_kernel = kernelFromFunction 3 gauss in
 		let new_freqs = Convolution.convolve_matrix gauss_kernel freqs in
 		for i = 0 to (h_b-1) do

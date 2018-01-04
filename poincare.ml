@@ -34,7 +34,7 @@ module Poincare : POINCARE =
 		(* NOTE: Only 3x3 *)
 		let cells = [|(-1, -1);(-1, 0);(-1, 1);(0, 1);(1, 1);(1, 0);(1, -1);(0, -1);(-1, -1)|];;
 		let array_of_matrix m =
-			let (h,w) = ((Array.length m),(Array.length m.(0))) in
+			let (h,w) = Images.getHW m in
 			let liste = Array.make (h*w-1) 0. in
 			for i = 0 to (h*w-2) do
 				let (k,l) = cells.(i) in
@@ -63,7 +63,7 @@ module Poincare : POINCARE =
 
 		(* Get all the singularity points *)
 		let poincare_index matrix bloc_size tolerance angle_method =
-			let (h,w) = ((Array.length matrix),(Array.length matrix.(0))) in
+			let (h,w) = Images.getHW matrix in
 			let blocs =
 				Images.makeBlocList (Orientation.smoothMyAngles (Orientation.getAngles matrix bloc_size)) 3 in
 			let ret = Array.make_matrix h w {x = 0 ; y = 0 ; typ = 3} in
@@ -80,8 +80,9 @@ module Poincare : POINCARE =
 			open_graph (Images.getFormat image.width image.height);
 			set_line_width 4;
 			draw_image (make_image image.matrix) 0 0;
-			for i = 1 to ((Array.length sps) - 1) do
-				for j = 1 to ((Array.length sps.(0)) - 1) do
+			let (h,w) = Images.getHW sps in
+			for i = 1 to (h-1) do
+				for j = 1 to (w-1) do
 						if sps.(i).(j).typ < 3 then
 						begin
 							if sps.(i).(j).typ = 0 then set_color red (* Loop *)

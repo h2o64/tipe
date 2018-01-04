@@ -31,7 +31,7 @@ module Frequency : FREQUENCY =
 
 		(* Get the signature of the windows (bloc_size,2*bloc_size) centered at (i,j) *)
 		let signature i j m angles bloc_size k =
-			let (he,wi) = ((Array.length m),(Array.length m.(0))) in
+			let (he,wi) = Images.getHW m in
 			let x = ref 0. in
 			let w = float_of_int bloc_size in
 			let angle = angles.((i-1)/bloc_size).((j-1)/bloc_size) in
@@ -68,7 +68,7 @@ module Frequency : FREQUENCY =
 
 		(* Get signature map *)
 		let get_signature_map m bloc_size =
-			let (h,w) = ((Array.length m),(Array.length m.(0))) in
+			let (h,w) = Images.getHW m in
 			let (h_new,w_new) = (h-1/bloc_size,w-1/bloc_size) in
 			let ret = createMatrixOfArray h_new w_new (bloc_size*2) 0. in
 			let angles = Orientation.smoothMyAngles (Orientation.getAngles_vector m bloc_size) in
@@ -109,7 +109,7 @@ module Frequency : FREQUENCY =
 		(* Get frequency map *)
 		let frequency_map m bloc_size =
 			let sign_map = get_signature_map m bloc_size in
-			let (h,w) = ((Array.length sign_map),(Array.length sign_map.(0))) in
+			let (h,w) = Images.getHW sign_map in
 			let ret = Array.make_matrix h w 0. in
 			for i = 0 to (h-1) do
 				for j = 0 to (w-1) do

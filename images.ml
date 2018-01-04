@@ -3,9 +3,14 @@ module type IMAGES =
 		type 'a matrix = 'a array array
 		type 'a bloc = { x : int; y : int; matrix : 'a matrix; }
 		type 'a pixel_blocs = 'a bloc list
-		type 'a image = { height : int; width : int; mutable matrix : 'a matrix; }
+		type 'a image = {
+		  height : int;
+		  width : int;
+		  mutable matrix : 'a matrix;
+		}
 		val getHeight : 'a matrix -> int
 		val getWidth : 'a matrix -> int
+		val getHW : 'a matrix -> int * int
 		val matrixApply : ('a -> 'b) -> 'a matrix -> 'b matrix
 		val import_image : string -> Graphics.color image
 		val getFormat : int -> int -> string
@@ -14,18 +19,22 @@ module type IMAGES =
 		val rgb_of_greyscale : float -> int
 		val imageToGreyScale : Graphics.color image -> float image
 		val bwimageToImage : float image -> int image
-		val getSurrounding : int -> int -> 'a matrix -> int -> int -> int -> 'a matrix
+		val getSurrounding :
+		  int -> int -> 'a matrix -> int -> int -> int -> 'a matrix
 		val makeBlocList : 'a matrix -> int -> 'a bloc array
 		val troncateImage : 'a image -> int -> 'a image
 		val transpose : 'a matrix -> 'a matrix
 		val getBlocPos : int -> int -> int -> (int * int) * (int * int)
-		val createMatrixOfMatrix : int -> int -> int -> 'a -> 'a array array array array
-		val cutInBlocs : 'a matrix -> int -> 'a array array array array
-		val getMatrixAv : float matrix -> float
+		val createMatrixOfMatrix :
+		  int -> int -> int -> 'a -> 'a array array array array
+		val cutInBlocs : 'a array array -> int -> 'a array array array array
+		val getMatrixAv : float array array -> float
 		val applyFunctMatrix : 'a array array -> ('a -> 'b) -> 'b array array
+		val applyFunctMatrix_d :
+		  'a array array -> 'b array array -> ('a -> 'b -> 'c) -> 'c array array
   end;;
 
-module Images : IMAGES = 
+module Images : IMAGES =
   struct
 		(* Structures *)
 		type 'a matrix = 'a array array;;
@@ -36,10 +45,11 @@ module Images : IMAGES =
 		(* Get height and width of an image *)
 		let getHeight (img : 'a matrix) = Array.length img;;
 		let getWidth (img : 'a matrix) = Array.length img.(0);;
+		let getHW m = (getHeight m,getWidth m);;
 
 		(* Apply a function to each element of a matrix *)
 		let matrixApply (f : 'a -> 'b) (matrix : 'a matrix) =
-			let (h,w) = (Array.length matrix,Array.length matrix.(0)) in
+			let (h,w) = getHW matrix in
 			let ret = Array.make_matrix h w (f matrix.(0).(0)) in
 			for i = 0 to (h- 1) do
 				for j = 0 to (w - 1) do
@@ -94,7 +104,7 @@ module Images : IMAGES =
 
 		(* Make matrix array for each bloc_size*bloc_size blocs *)
 		let makeBlocList matrix bloc_size =
-			let (h,w) = ((Array.length matrix),(Array.length matrix.(0))) in
+			let (h,w) = getHW matrix in
 			let ret = Array.make (h*w)
 					{x = -1; y = -1; matrix = (Array.make_matrix bloc_size bloc_size matrix.(0).(0))}  in
 				for i = 0 to (h-1) do
@@ -146,7 +156,7 @@ module Images : IMAGES =
 
 		(* Make matrix array for each bloc_size*bloc_size blocs *)
 		let cutInBlocs matrix bloc_size =
-			let (h,w) = ((Array.length matrix),(Array.length matrix.(0))) in
+			let (h,w) = Images.getHW matrix in
 			let ret = createMatrixOfMatrix (h/bloc_size) (w/bloc_size)
 							bloc_size matrix.(0).(0) in
 				for i = 0 to (h-1-(h mod bloc_size)) do
@@ -159,7 +169,7 @@ module Images : IMAGES =
 
 		(* Get matrix average value *)
 		let getMatrixAv matrix =
-			let (h,w) = ((Array.length matrix),(Array.length matrix.(0))) in
+			let (h,w) = Images.getHW matrix in
 			let ret = ref 0. in
 			for i = 0 to (h-1) do
 				for j = 0 to (w-1) do
@@ -169,11 +179,22 @@ module Images : IMAGES =
 
 		(* Apply function on matrix *)
 		let applyFunctMatrix m f =
-			let (h,w) = ((Array.length m),(Array.length m.(0))) in
+			let (h,w) = Images.getHW m in
 			let ret = Array.make_matrix h w (f m.(0).(0)) in
 			for i = 0 to (h-1) do
 				for j = 0 to (w-1) do
 					ret.(i).(j) <- f m.(i).(j);
+				done;
+			done;ret;;
+
+		(* Apply function on matrix *)
+		let applyFunctMatrix_d a b f =
+			let (h,w) = Images.getHW a in
+			if not ((h,w) =  Images.getHW b) then failwith "applyFunctMatrix_d: Not same size";
+			let ret = Array.make_matrix h w (f a.(0).(0) b.(0).(0)) in
+			for i = 0 to (h-1) do
+				for j = 0 to (w-1) do
+					ret.(i).(j) <- f a.(i).(j) b.(i).(j);
 				done;
 			done;ret;;
   end
