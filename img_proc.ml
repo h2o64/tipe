@@ -9,7 +9,7 @@ module Image_Processing =
 		(* Mean and variance based method of segmentation *)
 		let segmentation m bloc_size threshold =
 			let (h,w) = Images.getHW m in
-			let ret = Array.make_matrix h w 0. in
+			let ret = Array.make_matrix h w 255. in
 			let bloc_size_sqrd = float_of_int (bloc_size*bloc_size) in
 			let i = ref 0 in
 			while !i < h do
