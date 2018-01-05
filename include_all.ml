@@ -15,8 +15,8 @@ open Format;;
 
 (* Open modules *)
 #use "images.ml";;
-#use "testing.ml";;
 #use "convolution.ml";;
+#use "testing.ml";;
 #use "orientation.ml";;
 #use "poincare.ml";;
 #use "plot.ml";;

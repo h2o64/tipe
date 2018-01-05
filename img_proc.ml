@@ -9,7 +9,7 @@
     val gauss : float -> float -> float
     val apply_gabor : float Images.matrix -> int -> float array array
     val sobel_segmentation : float Images.matrix -> float array array
-    val do_everything : float Images.matrix -> int -> unit
+    val do_everything : float Images.matrix -> int -> float -> bool -> unit
   end;;
 
 module Image_Processing : IMAGE_PROCESSING = *)
@@ -108,8 +108,8 @@ module Image_Processing =
 		let s = sin angle in
 		let yangle x y = x*.c +. y*.s in
 		let xangle x y = (-1.) *. x *.s +. y*.c in
-		let xsigma_sqrd = 16. in
-		let ysigma_sqrd = 16. in
+		let xsigma_sqrd = 25. in
+		let ysigma_sqrd = 25. in
 		let funct x y =
 			(-0.5) *. ((((xangle x y)**2.) /. xsigma_sqrd) +. (((yangle x y)**2.) /. ysigma_sqrd)) in
 		let signal x y = cos (2. *. Poincare.pi *. freq *. (xangle x y)) in
@@ -125,7 +125,7 @@ module Image_Processing =
 	let apply_gabor m bloc_size =
 		let (h,w) = Images.getHW m in
 		let ret = Array.make_matrix h w 0. in
-		let angles = Orientation.smoothMyAngles (Orientation.getAngles_vector m bloc_size) in
+		let angles = Orientation.smoothMyAngles (Orientation.getAngles m bloc_size) in
 		let freqs = Frequency.frequency_map m bloc_size in
 		let (h_b,w_b) = Images.getHW angles in
 		let gauss_kernel = kernelFromFunction 2 gauss in
@@ -156,7 +156,7 @@ module Image_Processing =
 		if not ((Images.getHW mask) = (Images.getHW orig)) then
 			failwith "remove_with_mask: Mask doesn't match";
 		let (h,w) = Images.getHW mask in
-		let ret = Array.make_matrix h w 255. in
+		let ret = Array.make_matrix h w color in
 		for i = 0 to (h-1) do
 			for j = 0 to (w-1) do
 				if not (mask.(i).(j) = color) then ret.(i).(j) <- color
@@ -165,14 +165,20 @@ module Image_Processing =
 		done;ret;;
 		
 	(* DEBUG *)
-	let do_everything matrix bloc_size =
-		let tmp1 = segmentation matrix bloc_size 4500. in
-		let tmp2 = tmp1 in (* normalisation tmp1 in *)
-		let tmp3 = apply_gabor tmp2 bloc_size in
-		Testing.align_matrix tmp3;
-		(* Apply a mask
-		let mask = segmentation tmp3 bloc_size 1750. in
-		let tmp4 = remove_with_mask mask tmp3 255. in *)
-		Testing.displayAnyMatrix tmp3;;
+	(* fingerprint.jpg : bloc_size = 8 | seg_level = 4100
+		 fingerprint2.jpg : bloc_size = 16 | seg_level = 4100
+		 ppf1.png : bloc_size = 12 | seg_level = 400 *)
+	let do_everything matrix bloc_size seg_level norm =
+		(* Classic segmentation *)
+		let seg = ref (segmentation matrix bloc_size seg_level) in
+		(* Normalisation *)
+		if norm then seg := (normalisation !seg);
+		(* Gabor filters *)
+		let gabor = apply_gabor !seg bloc_size in
+		Testing.align_matrix gabor;
+		(* Apply a mask *)
+		(* let mask = segmentation gabor bloc_size 1750. in
+		let gabor_masked = remove_with_mask mask gabor 255. in *)
+		Testing.displayAnyMatrix gabor;;
 
 	end
