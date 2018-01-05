@@ -30,12 +30,10 @@ module Image_Processing =
 						(let max_h = (!i+bloc_size)-1 in
 						let max_w = (!j+bloc_size)-1 in
 						(* Sum blocs intensities *)
-						let dbg = ref 0 in
 						let sum = ref 0. in
 						for k = !i to max_h do
 							for l = !j to max_w do
 								sum := !sum +. m.(k).(l);
-								dbg := !dbg + 1;
 							done;
 						done;
 						(* Get bloc mean *)
@@ -164,9 +162,9 @@ module Image_Processing =
 			done;
 		done;ret;;
 		
-	(* DEBUG *)
-	(* fingerprint.jpg : bloc_size = 8 | seg_level = 4100
-		 fingerprint2.jpg : bloc_size = 16 | seg_level = 4100
+	(* Display gabor filtered *)
+	(* fingerprint2.jpg : bloc_size = 8 | seg_level = 4100
+		 fingerprint1.jpg : bloc_size = 16 | seg_level = 4100
 		 ppf1.png : bloc_size = 12 | seg_level = 400 *)
 	let do_everything matrix bloc_size seg_level norm =
 		(* Classic segmentation *)
@@ -179,6 +177,51 @@ module Image_Processing =
 		(* Apply a mask *)
 		(* let mask = segmentation gabor bloc_size 1750. in
 		let gabor_masked = remove_with_mask mask gabor 255. in *)
-		Testing.displayAnyMatrix gabor;;
+		Testing.displayAnyMatrix gabor;
+		gabor;;
+
+
+	(* Binarization *)
+	(* Classic method of local threshold with mean, often efficient after
+		 contextual filtering as Gabor *)
+	let binarization m bloc_size =
+			let (h,w) = Images.getHW m in
+			let ret = Array.make_matrix h w 1. in
+			let bloc_size_sqrd = float_of_int (bloc_size*bloc_size) in
+			let i = ref 0 in
+			while !i < h do
+				let j = ref 0 in
+				while !j < w do
+					(* Process calculation if not on border *)
+					if not (((h-1) < (!i+bloc_size)) || ((w-1) < (!j+bloc_size))) then
+						(let max_h = (!i+bloc_size)-1 in
+						let max_w = (!j+bloc_size)-1 in
+						(* Sum blocs intensities *)
+						let sum = ref 0. in
+						for k = !i to max_h do
+							for l = !j to max_w do
+								sum := !sum +. m.(k).(l)
+							done;
+						done;
+						(* Get bloc mean *)
+						let mean = !sum /. bloc_size_sqrd in
+						(* Set pixel < mean to 0 *)
+						for k = !i to max_h do
+							for l = !j to max_w do
+								if m.(k).(l) < mean then ret.(k).(l) <- 0.
+							done;
+						done;)
+					else
+						(* Wipe out borders *)
+						(for k = !i to (min (!i+bloc_size) (h-1)) do
+							for l = !j to (min (!j+bloc_size) (w-1)) do
+								ret.(k).(l) <- 0.
+							done;
+						done);
+					j := !j + bloc_size;
+				done;
+				i := !i + bloc_size
+			done;
+		ret;;
 
 	end
