@@ -1,13 +1,45 @@
-(* Vector Field *)
+(* Vector Field - Smooth *)
 Orientation.vector_field Orientation.getAngles Testing.test_image 16 true;;
 Orientation.vector_field Orientation.getAngles_vector Testing.test_image 16 true;;
 
+(* Vector Field *)
+Orientation.vector_field Orientation.getAngles Testing.test_image 16 false;;
+Orientation.vector_field Orientation.getAngles_vector Testing.test_image 16 false;;
+
 (* Poincare *)
-Poincare.display_sp Testing.test_image 16 25 Poincare.getAngleBetween;;
-Poincare.display_sp Testing.test_image 16 25 Poincare.getAngleBetween_bis;;
+Poincare.display_sp Testing.test_image 16 48 Poincare.getAngleBetween;;
+Poincare.display_sp Testing.test_image 16 48 Poincare.getAngleBetween_bis;;
 
 (* Frequency *)
 let grey_test = Images.imageToGreyScale Testing.test_image;;
 Frequency.plot_signature 200 200 grey_test.matrix 16;;
 Frequency.interactive_signature Testing.test_image 16;;
 
+(* Segmentation - fingerprint2 *)
+let grey_test = Images.imageToGreyScale Testing.test_image;;
+let seg = Image_Processing.segmentation grey_test.matrix 12 400.;;
+Testing.displayAnyMatrix seg;;
+
+(* Normalisation *)
+let grey_test = Images.imageToGreyScale Testing.test_image;;
+let norm = Image_Processing.normalisation grey_test.matrix;;
+Testing.displayAnyMatrix norm;;
+
+(* Gabor - Contextual Filtering *)
+let grey_test = Images.imageToGreyScale Testing.test_image;;
+let gabor = Image_Processing.do_everything grey_test.matrix 12 400. false;;
+
+(* Binarization *)
+let grey_test = Images.imageToGreyScale Testing.test_image;;
+let gabor = Image_Processing.do_everything grey_test.matrix 12 400. false;;
+let bin = Image_Processing.binarization gabor 12;;
+Testing.displayBin bin;;
+
+(* Thining *)
+let grey_test = Images.imageToGreyScale Testing.test_image;;
+let gabor = Image_Processing.do_everything grey_test.matrix 12 400. false;;
+let bin = Image_Processing.binarization gabor 12;;
+let thin = Image_Processing.thininh bin;;
+Testing.displayBin thin;;
+
+/!\ Use Otso's threshold method
