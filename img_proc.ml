@@ -285,4 +285,83 @@ module Image_Processing =
 			done;
 		ret;;
 
+	(* Guo-Hall thinning algorithm - 1987 *)
+	let cells = [|(-1, -1);(-1, 0);(-1, 1);(0, 1);(1, 0);(1, -1);(0, -1);(-1, -1)|];;
+	(* Get 8-neighborhood bool array *)
+	let p matrix i j num =
+		if num = 9 then matrix.(i-1).(j-1)
+		else if num = 8 then matrix.(i).(j-1)
+		else if num = 7 then matrix.(i+1).(j-1)
+		else if num = 6 then matrix.(i+1).(j)
+		else if num = 5 then matrix.(i+1).(j+1)
+		else if num = 4 then matrix.(i).(j+1)
+		else if num = 3 then matrix.(i-1).(j+1)
+		else if num = 2 then matrix.(i-1).(j)
+		else matrix.(i).(j);;
+	(* Is a pixel 8-connected *)
+	let is8connnected matrix i j =
+		let ret = ref true in
+		for f = 0 to 7 do
+			let (k,l) = cells.(f) in
+			if not matrix.(i-k).(j-l) then ret := false
+		done;!ret;;
+	(* Count the number of distinct 8-connected components of 1s in pixel’s 8-neighborhood. *)
+	let c matrix i j =
+		let num = ref 0 in
+		for f = 0 to 7 do
+			let (k,l) = cells.(f) in
+			if (is8connnected matrix (i-k) (j-l)) then num := !num + 1;
+		done;!num;;
+	(* Actuall thining part *)
+	let thining m =
+		let (h,w) = Images.getHW m in
+		let ret = Images.copyMatrix m in
+		(* Work with a boolean matrix *)
+		let bin2bool value = (value = 1.) in
+		let bool2bin value =
+			if value then 1
+			else 0; in
+		(* Constant checker *)
+		let is_deleting = ref true in
+		let num_iter = ref 0 in
+		(* Defined in pseudo-code as a min *)
+		let n1 matrix i j =
+			let p_cur = p matrix i j in
+			bool2bin (p_cur 9 || p_cur 2) +
+			bool2bin (p_cur 3 || p_cur 4) +
+			bool2bin (p_cur 5 || p_cur 6) +
+			bool2bin (p_cur 7 || p_cur 8) in
+		let n2 matrix i j =
+			let p_cur = p matrix i j in
+			bool2bin (p_cur 2 || p_cur 3) +
+			bool2bin (p_cur 4 || p_cur 5) +
+			bool2bin (p_cur 6 || p_cur 7) +
+			bool2bin (p_cur 8 || p_cur 9) in
+		let n matrix i j = min (n1 matrix i j) (n2 matrix i j) in
+		(* Actual while - Add an iter check *)
+		while !is_deleting && (!num_iter < 25) do
+			(* Prepare matrix *)
+			let m_b = Images.applyFunctMatrix ret bin2bool in
+			(* Deleting bool *)
+			let deletes = ref false in
+			(* Keep track of iterations *)
+			Testing.dbg_int "num_iter" !num_iter true;
+			num_iter := !num_iter + 1;
+			for i = 3 to (h-3) do
+				for j = 3 to (w-3) do
+					let p_cur = p m_b i j in
+					let cond1 = ((c m_b i j) = 1) in
+					let cond2 = (2 <= (n m_b i j)) && ((n m_b i j) <= 3) in
+					let cond3_a = (!num_iter mod 2 = 0) && (((p_cur 2) || (p_cur 3) || (not (p_cur 5))) && (p_cur 4) = false) in
+					let cond3_b = (!num_iter mod 2 = 1) && (((p_cur 6) || (p_cur 7) || (not (p_cur 9))) && (p_cur 8) = false) in
+					(* Check parity of num_iter *)
+					if cond1 && cond2 && (cond3_a || cond3_b) then
+						ret.(i).(j) <- 0.;
+						deletes := true
+				done;
+			done;
+			Testing.displayBin ret;
+			is_deleting := !deletes;
+		done;ret;;
+
 	end
