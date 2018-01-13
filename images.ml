@@ -1,37 +1,37 @@
 module type IMAGES =
   sig
-		type 'a matrix = 'a array array
-		type 'a bloc = { x : int; y : int; matrix : 'a matrix; }
-		type 'a pixel_blocs = 'a bloc list
-		type 'a image = {
-		  height : int;
-		  width : int;
-		  mutable matrix : 'a matrix;
-		}
-		val getHeight : 'a matrix -> int
-		val getWidth : 'a matrix -> int
-		val getHW : 'a matrix -> int * int
-		val matrixApply : ('a -> 'b) -> 'a matrix -> 'b matrix
-		val import_image : string -> Graphics.color image
-		val getFormat : int -> int -> string
-		val color_of_rgbint : Graphics.color -> int * int * int
-		val greyscale_of_rgb : Graphics.color -> float
-		val rgb_of_greyscale : float -> int
-		val imageToGreyScale : Graphics.color image -> float image
-		val bwimageToImage : float image -> int image
-		val getSurrounding :
-		  int -> int -> 'a matrix -> int -> int -> int -> 'a matrix
-		val makeBlocList : 'a matrix -> int -> 'a bloc array
-		val troncateImage : 'a image -> int -> 'a image
-		val transpose : 'a matrix -> 'a matrix
-		val getBlocPos : int -> int -> int -> (int * int) * (int * int)
-		val createMatrixOfMatrix :
-		  int -> int -> int -> 'a -> 'a array array array array
-		val cutInBlocs : 'a array array -> int -> 'a array array array array
-		val getMatrixAv : float array array -> float
-		val applyFunctMatrix : 'a array array -> ('a -> 'b) -> 'b array array
-		val applyFunctMatrix_d :
-		  'a array array -> 'b array array -> ('a -> 'b -> 'c) -> 'c array array
+    type 'a matrix = 'a array array
+    type 'a bloc = { x : int; y : int; matrix : 'a matrix; }
+    type 'a pixel_blocs = 'a bloc list
+    type 'a image = {
+      height : int;
+      width : int;
+      mutable matrix : 'a matrix;
+    }
+    val getHeight : 'a matrix -> int
+    val getWidth : 'a matrix -> int
+    val getHW : 'a matrix -> int * int
+    val matrixApply : ('a -> 'b) -> 'a matrix -> 'b matrix
+    val import_image : string -> Graphics.color image
+    val getFormat : int -> int -> string
+    val color_of_rgbint : Graphics.color -> int * int * int
+    val greyscale_of_rgb : Graphics.color -> float
+    val rgb_of_greyscale : float -> int
+    val imageToGreyScale : Graphics.color image -> float image
+    val bwimageToImage : float image -> int image
+    val getSurrounding :
+      int -> int -> 'a matrix -> int -> int -> int -> 'a matrix
+    val makeBlocList : 'a matrix -> int -> 'a bloc array
+    val troncateImage : 'a image -> int -> 'a image
+    val transpose : 'a matrix -> 'a matrix
+    val getBlocPos : int -> int -> int -> (int * int) * (int * int)
+    val createMatrixOfMatrix :
+      int -> int -> int -> 'a -> 'a array array array array
+    val cutInBlocs : 'a matrix -> int -> 'a array array array array
+    val getMatrixAv : float matrix -> float
+    val applyFunctMatrix : 'a matrix -> ('a -> 'b) -> 'b array array
+    val applyFunctMatrix_d :
+      'a matrix -> 'b matrix -> ('a -> 'b -> 'c) -> 'c array array
   end;;
 
 module Images : IMAGES =
