@@ -197,7 +197,7 @@ module Image_Processing =
 		 contextual filtering as Gabor *)
 	let binarization m bloc_size =
 			let (h,w) = Images.getHW m in
-			let ret = Array.make_matrix h w 1. in
+			let ret = Array.make_matrix h w 0. in
 			let bloc_size_sqrd = float_of_int (bloc_size*bloc_size) in
 			let i = ref 0 in
 			while !i < h do
@@ -216,19 +216,12 @@ module Image_Processing =
 						done;
 						(* Get bloc mean *)
 						let mean = !sum /. bloc_size_sqrd in
-						(* Set pixel < mean to 0 *)
+						(* Set pixel > mean to 1 *)
 						for k = !i to max_h do
 							for l = !j to max_w do
-								if m.(k).(l) < mean then ret.(k).(l) <- 0.
+								if m.(k).(l) > mean then ret.(k).(l) <- 1.
 							done;
-						done;)
-					else
-						(* Wipe out borders *)
-						(for k = !i to (min (!i+bloc_size) (h-1)) do
-							for l = !j to (min (!j+bloc_size) (w-1)) do
-								ret.(k).(l) <- 0.
-							done;
-						done);
+						done;);
 					j := !j + bloc_size;
 				done;
 				i := !i + bloc_size
