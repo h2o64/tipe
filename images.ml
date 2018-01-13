@@ -32,6 +32,7 @@ module type IMAGES =
     val applyFunctMatrix : 'a matrix -> ('a -> 'b) -> 'b array array
     val applyFunctMatrix_d :
       'a matrix -> 'b matrix -> ('a -> 'b -> 'c) -> 'c array array
+    val copyMatrix : 'a array array -> 'a array array
   end;;
 
 module Images : IMAGES =
@@ -197,4 +198,13 @@ module Images : IMAGES =
 					ret.(i).(j) <- f a.(i).(j) b.(i).(j);
 				done;
 			done;ret;;
+
+		(* Copy matrix *)
+		let copyMatrix m =
+			let n = Array.length m in
+			let ret = ref [|(Array.copy m.(0))|] in
+			for i = 1 to (n-1) do
+				ret := Array.append !ret [|(Array.copy m.(0))|];
+			done;!ret;;
+
   end
