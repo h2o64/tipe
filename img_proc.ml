@@ -172,7 +172,64 @@ module Image_Processing =
 				else ret.(i).(j) <- orig.(i).(j);
 			done;
 		done;ret;;
-		
+
+	(* Return ROI pixels from sobel segmented image *)
+	let getROI m  =
+		let (h,w) = Images.getHW m in
+		let roi_size = ref 0 in
+		(* Get ROI left side *)
+		let roi_left = Array.make h (-1,-1) in
+		for i = 1 to (h-2) do
+			let j = ref 1 in
+			while (m.(i).(!j) = 0.) && (!j < w-2) do
+				j := !j + 1;
+			done;
+			if (!j < w-2) then
+				(roi_left.(!roi_size)<-(i,!j+1);
+				roi_size := !roi_size + 1)
+		done;
+		(* Get ROI right side *)
+		let roi_right = Array.make (!roi_size) (-1,-1) in
+		let (start_x,_) = roi_left.(0) in
+		let (end_x,_) = roi_left.(!roi_size-1) in
+		let i = ref start_x in
+		let roi_cur = ref 0 in
+		while (!i <= end_x) do
+			let j = ref (w-2) in
+			while (m.(!i).(!j) = 0.) do
+				j := !j - 1
+			done;
+			roi_right.(!roi_cur)<-(!i,!j-1);
+			roi_cur := !roi_cur + 1;
+			i := !i + 1
+		done;
+		(* Merge both *)
+		let ret_cur = ref 0 in
+		let roi = Array.make (h*w) (-1,-1) in
+		for i = 0 to (!roi_size-1) do
+			let (start_x,start_y) = roi_left.(i) in
+			let (_,end_y) = roi_right.(i) in
+			for j = start_y to end_y do
+				roi.(!ret_cur)<-(start_x,j);
+				ret_cur := !ret_cur + 1;
+			done;
+		done;
+		(* Only keep relevant stuff - TODO: Please someone improve *)
+		let ret = Array.make !ret_cur (-1,-1) in
+		for i = 0 to (!ret_cur-1) do
+			ret.(i) <- roi.(i)
+		done;
+		ret;;
+
+	(* Only keep ROI from a matrix *)
+	let keepROI m roi =
+		let (h,w) = Images.getHW m in
+		let ret = Array.make_matrix h w 255.0 in
+		for r = 0 to ((Array.length roi)-1) do
+			let (a,b) = roi.(r) in
+			ret.(a).(b) <- m.(a).(b)
+		done;ret;;
+
 	(* Display gabor filtered *)
 	(* fingerprint2.jpg : bloc_size = 8 | seg_level = 4100
 		 fingerprint1.jpg : bloc_size = 16 | seg_level = 4100
