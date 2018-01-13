@@ -57,6 +57,17 @@ module Image_Processing =
 				done;
 				i := !i + bloc_size
 			done;
+			(* Remove all borders *)
+			for i = 0 to h-1 do
+				for j = w-(w mod bloc_size) to w-1 do
+					ret.(i).(j) <- 255.
+				done;
+			done;
+			for j = 0 to w-1 do
+				for i = h-(h mod bloc_size) to h-1 do
+					ret.(i).(j) <- 255.
+				done;
+			done;
 		ret;;
 
 	(* Image normalisation with histogram equalization *)
