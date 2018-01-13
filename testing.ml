@@ -9,6 +9,7 @@ module type TESTING =
 		val get_array_max : 'a array -> 'a
 		val get_matrix_max : 'a array array -> 'a
 		val align_matrix : float array array -> unit
+		val displayBin : float array array -> unit
   end;;
 
 module Testing : TESTING = 
@@ -73,5 +74,11 @@ module Testing : TESTING =
 					m.(i).(j) <- convert m.(i).(j);
 				done;
 			done;;
+
+		let displayBin m =
+			let f x =
+				if x = 0. then 255.
+				else 0. in
+			displayAnyMatrix (Images.applyFunctMatrix m f);;
 
 	end
