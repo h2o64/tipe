@@ -15,15 +15,15 @@ module Minutae =
 		type cn_pix = { x : int ; y : int ; typ : int };;
 
 		(* All paired pixels in 3x3 *)
-		let cells = [|(-1, -1);(-1, 0);(-1, 1);(0, 1);(1, 1);(1, 0);(1, -1);(0, -1);(-1, -1)|];;
+		let cells = [|(-1, -1);(-1, 0);(-1, 1);(0, 1);(1, 1);(1, 0);(1, -1);(0, -1)|];;
 
 		(* Get crossing number of pixel(i,j) *)
 		let cn_local m i j =
 			(* Get CN *)
 			let crossings = ref 0 in
-			for k = 0 to 7 do
-				let (a,b) = cells.(k) in
-				let (c,d) = cells.((k+1) mod 8) in
+			for k = 1 to 8 do
+				let (a,b) = cells.(k mod 8) in
+				let (c,d) = cells.(k-1) in
 				crossings := !crossings + abs (m.(i+a).(j+b) - m.(i+c).(j+d))
 			done;
 			{x = i ; y = j ; typ = !crossings / 2};;
@@ -34,7 +34,7 @@ module Minutae =
 			let ret = Array.make_matrix h w {x = -1 ; y = -1 ; typ = 0} in
 			for i = 1 to (h-2) do
 				for j = 1 to (w-2) do
-					ret.(i).(j)<-(cn_local matrix i j);
+					if (matrix.(i).(j) = 1) then ret.(i).(j)<-(cn_local matrix i j);
 				done;
 			done;
 			ret;;
@@ -54,13 +54,14 @@ module Minutae =
 			let cn_matrix = cn_global matrix in
 			for i = 0 to (h-1) do
 				for j = 0 to (w-1) do
-					if cn_matrix.(i).(j).typ = 1 then
-						(draw_minutae i j h 2 red; (* Ridge Ending *)
-						print_int i;
-						print_string " ";
-						print_int j;
-						print_string "\n";);
-					(* if cn_matrix.(i).(j).typ = 3 then draw_minutae i j h 2 blue; (* Bifurcation *) *)
+					if (cn_matrix.(i).(j).typ = 1) then
+						draw_minutae i j h 2 red; (* Ridge Ending *)
+					if false && (cn_matrix.(i).(j).typ = 2) then
+						draw_minutae i j h 2 green; (* Intermediate Ridge point *)
+					if (cn_matrix.(i).(j).typ = 3) then
+						draw_minutae i j h 2 blue; (* Bifurcation *)
+					if (cn_matrix.(i).(j).typ > 3) then
+						draw_minutae i j h 2 cyan; (* Unknown *)
 				done;
 			done;;
 
