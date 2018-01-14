@@ -33,6 +33,9 @@ module type IMAGES =
     val applyFunctMatrix_d :
       'a matrix -> 'b matrix -> ('a -> 'b -> 'c) -> 'c array array
     val copyMatrix : 'a array array -> 'a array array
+    val areThereNonZeros_aux : int array array -> int -> bool -> bool
+    val areThereNonZeros : int array array -> bool
+    val absDiff : int matrix -> int matrix -> int array array
   end;;
 
 module Images : IMAGES =
@@ -201,10 +204,19 @@ module Images : IMAGES =
 
 		(* Copy matrix *)
 		let copyMatrix m =
-			let n = Array.length m in
-			let ret = ref [|(Array.copy m.(0))|] in
-			for i = 1 to (n-1) do
-				ret := Array.append !ret [|(Array.copy m.(0))|];
-			done;!ret;;
+			let f x = x in
+			applyFunctMatrix m f;;
+
+		(* Are there zeros ? *)
+		let rec areThereNonZeros_aux m i b =
+			if i < 0 then false
+			else if (b = true) then true
+			else (areThereNonZeros_aux m (i-1) (Array.mem 1 m.(i)));;
+		let areThereNonZeros m = areThereNonZeros_aux m ((Array.length m)-1) false;;
+
+		(* Get abs difference between two matrix *)
+		let absDiff a b =
+			let f a b = abs (b-a) in
+			applyFunctMatrix_d a b f;;
 
   end

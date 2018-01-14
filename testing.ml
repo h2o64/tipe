@@ -9,10 +9,11 @@ module type TESTING =
 		val get_array_max : 'a array -> 'a
 		val get_matrix_max : 'a array array -> 'a
 		val align_matrix : float array array -> unit
-		val displayBin : float array array -> unit
+		val displayBin : int array array -> unit
+    val simpleBinarize : float Images.matrix -> int array array
   end;;
 
-module Testing : TESTING = 
+module Testing : TESTING =
   struct
 		(* Open image to analyse *)
 		let test_image = Images.import_image "Images/ppf1.png"
@@ -77,8 +78,17 @@ module Testing : TESTING =
 
 		let displayBin m =
 			let f x =
-				if x = 0. then 255.
+				if x = 0 then 255.
 				else 0. in
 			displayAnyMatrix (Images.applyFunctMatrix m f);;
 
+		let simpleBinarize m =
+			let (h,w) = Images.getHW m in
+			let ret = Array.make_matrix h w 0 in
+			let tmp = 255. /. 2. in
+			for i = 0 to (h-1) do
+				for j = 0 to (w-1) do
+					if m.(i).(j) < tmp then ret.(i).(j) <- 1;
+				done;
+			done;ret;;
 	end

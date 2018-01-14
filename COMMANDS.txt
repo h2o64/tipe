@@ -27,19 +27,39 @@ Testing.displayAnyMatrix norm;;
 
 (* Gabor - Contextual Filtering *)
 let grey_test = Images.imageToGreyScale Testing.test_image;;
-let gabor = Image_Processing.do_everything grey_test.matrix 12 400. false;;
+let gabor = Image_Processing.do_everything grey_test.matrix 12 400. false true;;
 
 (* Binarization *)
 let grey_test = Images.imageToGreyScale Testing.test_image;;
-let gabor = Image_Processing.do_everything grey_test.matrix 12 400. false;;
+let gabor = Image_Processing.do_everything grey_test.matrix 12 400. false true;;
 let bin = Image_Processing.binarization gabor 12;;
 Testing.displayBin bin;;
 
+(* Circle Test - Image Movement Difference *)
+let circle_right = Images.import_image "Images/circle_right.png";;
+let circle_left = Images.import_image "Images/circle_left.png";;
+let grey_right = Images.imageToGreyScale circle_right;;
+let grey_left = Images.imageToGreyScale circle_left;;
+let bin_right = Testing.simpleBinarize grey_right.matrix;;
+let bin_left = Testing.simpleBinarize grey_left.matrix;;
+Image_Processing.img_mvt bin_right bin_left;;
+Testing.displayBin bin_right;;
+
+(* Thining - Test *)
+let test_thin = Images.import_image "Images/guo-hall-thinning-src-img.jpg";;
+let grey_thin = Images.imageToGreyScale test_thin;;
+let bin_thin = Image_Processing.binarization grey_thin.matrix 26;;
+Testing.displayBin bin_thin;;
+let rev_bin = Image_Processing.reverseBin bin_thin;;
+Testing.displayBin rev_bin;;
+let thin = Image_Processing.thinning rev_bin;;
+Testing.displayBin thin;;
+
 (* Thining *)
 let grey_test = Images.imageToGreyScale Testing.test_image;;
-let gabor = Image_Processing.do_everything grey_test.matrix 12 400. false;;
+let gabor = Image_Processing.do_everything grey_test.matrix 12 400. false true;;
 let bin = Image_Processing.binarization gabor 12;;
-let thin = Image_Processing.thininh bin;;
+let thin = Image_Processing.thinning bin;;
 Testing.displayBin thin;;
 
 /!\ Use Otso's threshold method
