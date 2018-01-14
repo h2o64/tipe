@@ -382,16 +382,19 @@ module Image_Processing =
 				let cond2 = (2 <= (n m_b i j)) && ((n m_b i j) <= 3) in
 				let cond3 = ((m_f m_b i j) = false) in
 				if (cond1 && cond2 && cond3) then
-					(marker.(i).(j) <- 1;
-					(if not m_b.(i).(j) then deleting := true));
+					marker.(i).(j) <- 1;
 			done;
 		done;
 		(* Removal loop *)
 		for i = 2 to (h-2) do
 			for j = 2 to (w-2) do
-				if (marker.(i).(j) = 1) then (m.(i).(j) <- 1)
+				(* Change pixels reported by marker IF they are black on img *)
+				if (marker.(i).(j) = 1) && (m.(i).(j) = 1) then
+					(m.(i).(j) <- 0;
+					deleting := true);
 			done;
-		done;!deleting;;
+		done;
+		!deleting;;
 
 	(* Actuall thinning part *)
 	let thinning m =
@@ -438,16 +441,9 @@ module Image_Processing =
 		(* Isolate BIN ROI *)
 		print_string "\nExtract ROI from binarized image ...";
 		let bin_roi = keepROI_bin bin roi in
-		(* Reverse BIN *)
-		print_string "\nReverse binazized image ...";
-		let bin_rev = reverseBin bin_roi in
-		Testing.displayBin bin_rev;
 		(* Do thinning *)
 		print_string "\nApply thinning algorithm ...";
-		let thin = thinning bin_rev in
-		(* Reverse thinned image *)
-		print_string "\nReverse thinned image ...";
-		let thin_rev = reverseBin thin in
-		thin_rev;;
+		let thin = thinning bin_roi in
+		thin;;
 
 	end

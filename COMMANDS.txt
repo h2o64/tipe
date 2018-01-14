@@ -48,11 +48,11 @@ Testing.displayBin bin_right;;
 (* Thining - Test *)
 let test_thin = Images.import_image "Images/guo-hall-thinning-src-img.jpg";;
 let grey_thin = Images.imageToGreyScale test_thin;;
-let bin_thin = Image_Processing.binarization grey_thin.matrix 26;;
+let bin_thin = Testing.simpleBinarize grey_thin.matrix;;
 Testing.displayBin bin_thin;;
-let rev_bin = Image_Processing.reverseBin bin_thin;;
-Testing.displayBin rev_bin;;
-let thin = Image_Processing.thinning rev_bin;;
+let bin_rev = Image_Processing.reverseBin bin_thin;;
+Testing.displayBin bin_rev;;
+let thin = Image_Processing.thinning bin_rev;;
 Testing.displayBin thin;;
 
 (* Thining *)
