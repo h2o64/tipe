@@ -85,7 +85,7 @@ module Testing : TESTING =
 		let simpleBinarize m =
 			let (h,w) = Images.getHW m in
 			let ret = Array.make_matrix h w 0 in
-			let tmp = 255. /. 2. in
+			let tmp = 50. in
 			for i = 0 to (h-1) do
 				for j = 0 to (w-1) do
 					if m.(i).(j) < tmp then ret.(i).(j) <- 1;

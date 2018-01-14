@@ -331,7 +331,7 @@ module Image_Processing =
 			for j = 0 to (w-1) do
 				let a_b = bin2bool a.(i).(j) in
 				let b_b = bin2bool b.(i).(j) in
-				a.(i).(j) <- bool2bin (a_b || (not b_b));
+				a.(i).(j) <- bool2bin (a_b && (not b_b));
 			done;
 		done;;
 
@@ -340,15 +340,16 @@ module Image_Processing =
 		(* Prepare matrix *)
 		let (h,w) = Images.getHW m in
 		let marker = Array.make_matrix h w 0 in
+		let m_bak = Images.copyMatrix m in
 		let m_b = Images.applyFunctMatrix m bin2bool in
 		let deleting = ref false in
-		(* C(P1)   = !P2 & (P3 | P4) + !P4 & (P5 | P6) + !P6 & (P7 | P8) + !P8 & (P1 | P2) *)
+		(* C(P1)   = !P2 & (P3 | P4) + !P4 & (P5 | P6) + !P6 & (P7 | P8) + !P8 & (P9 | P2) *)
 		let c matrix i j =
 			let p_cur = p matrix i j in
 			let a = ((not (p_cur 2)) && ((p_cur 3) || p_cur 4)) in
 			let b = ((not (p_cur 4)) && ((p_cur 5) || p_cur 6)) in
 			let c = ((not (p_cur 6)) && ((p_cur 7) || p_cur 8)) in
-			let d = ((not (p_cur 8)) && ((p_cur 1) || p_cur 2)) in
+			let d = ((not (p_cur 8)) && ((p_cur 9) || p_cur 2)) in
 			((bool2bin a) + (bool2bin b) + (bool2bin c) + (bool2bin d)) in
 		(* N1(P1) = (P9 | P2) + (P3 | P4) + (P5 | P6) + (P7 | P8) *)
 		let n1 matrix i j =
@@ -385,28 +386,18 @@ module Image_Processing =
 					marker.(i).(j) <- 1;
 			done;
 		done;
-		(* Removal loop *)
-		for i = 2 to (h-2) do
-			for j = 2 to (w-2) do
-				(* Change pixels reported by marker IF they are black on img *)
-				if (marker.(i).(j) = 1) && (m.(i).(j) = 1) then
-					(m.(i).(j) <- 0;
-					deleting := true);
-			done;
-		done;
+		img_mvt m marker;
+		deleting := Images.areThereNonZeros(Images.absDiff m m_bak);
 		!deleting;;
 
 	(* Actuall thinning part *)
 	let thinning m =
-		let (h,w) = Images.getHW m in
-		let prev = ref (Array.make_matrix h w 0) in
 		let cur_m = Images.copyMatrix m in
 		(* Actual while - Add an iter check *)
 		let isDeleting = ref true in
 		while !isDeleting do
 			isDeleting := one_thining cur_m 0;
 			isDeleting := one_thining cur_m 1;
-			prev := Images.copyMatrix cur_m;
 			Testing.displayBin cur_m;
 		done;cur_m;;
 
