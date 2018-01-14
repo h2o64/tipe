@@ -7,4 +7,61 @@ module Minutae : MINUTAE = *)
 module Minutae =
   struct
 
+		(* 0 = not a minutia
+			 1 = ridge ending
+			 2 = intermediate ridge point
+			 3 = bifurcation
+			 4 = unknown *)
+		type cn_pix = { x : int ; y : int ; typ : int };;
+
+		(* All paired pixels in 3x3 *)
+		let cells = [|(-1, -1);(-1, 0);(-1, 1);(0, 1);(1, 1);(1, 0);(1, -1);(0, -1);(-1, -1)|];;
+
+		(* Get crossing number of pixel(i,j) *)
+		let cn_local m i j =
+			(* Get CN *)
+			let crossings = ref 0 in
+			for k = 0 to 7 do
+				let (a,b) = cells.(k) in
+				let (c,d) = cells.((k+1) mod 8) in
+				crossings := !crossings + abs (m.(i+a).(j+b) - m.(i+c).(j+d))
+			done;
+			{x = i ; y = j ; typ = !crossings / 2};;
+
+		(* Execute crossing number on whole matrix *)
+		let cn_global matrix =
+			let (h,w) = Images.getHW matrix in
+			let ret = Array.make_matrix h w {x = -1 ; y = -1 ; typ = 0} in
+			for i = 1 to (h-2) do
+				for j = 1 to (w-2) do
+					ret.(i).(j)<-(cn_local matrix i j);
+				done;
+			done;
+			ret;;
+
+		(* Draw circle *)
+		let draw_minutae i j h l color =
+			let (x,y) = Orientation.getCircleLocation i j h 1 in
+			set_color color;
+			moveto x y;
+			draw_circle x y l;;
+
+		(* Display all minutae - Use binary matrix *)
+		let display_minutae matrix =
+			let (h,w) = Images.getHW matrix in
+			Testing.displayBin matrix;
+			(* Get CN matrix *)
+			let cn_matrix = cn_global matrix in
+			for i = 0 to (h-1) do
+				for j = 0 to (w-1) do
+					if cn_matrix.(i).(j).typ = 1 then
+						(draw_minutae i j h 2 red; (* Ridge Ending *)
+						print_int i;
+						print_string " ";
+						print_int j;
+						print_string "\n";);
+					(* if cn_matrix.(i).(j).typ = 3 then draw_minutae i j h 2 blue; (* Bifurcation *) *)
+				done;
+			done;;
+
 	end
