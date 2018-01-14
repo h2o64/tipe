@@ -230,28 +230,14 @@ module Image_Processing =
 			ret.(a).(b) <- m.(a).(b)
 		done;ret;;
 
-	(* Display gabor filtered *)
-	(* fingerprint2.jpg : bloc_size = 8 | seg_level = 4100
-		 fingerprint1.jpg : bloc_size = 16 | seg_level = 4100
-		 ppf1.png : bloc_size = 12 | seg_level = 400 *)
-	let do_everything matrix bloc_size seg_level norm useROI =
-		(* Classic segmentation *)
-		let seg = ref (segmentation matrix bloc_size seg_level) in
-		(* Sobel-ed Matrix *)
-		let sobel_seg = sobel_segmentation !seg in
-		(* Get ROI *)
-		let roi = getROI sobel_seg in
-		(* Normalisation *)
-		if norm then seg := (normalisation !seg);
-		(* Gabor filters *)
-		let gabor = apply_gabor !seg bloc_size in
-		Testing.align_matrix gabor;
-		(* Isolate ROI *)
-		let ret = ref gabor in
-		if useROI then ret := keepROI gabor roi;
-		Testing.displayAnyMatrix !ret;
-		!ret;;
-
+	(* Only keep ROI from a BIN matrix *)
+	let keepROI_bin m roi =
+		let (h,w) = Images.getHW m in
+		let ret = Array.make_matrix h w 0 in
+		for r = 0 to ((Array.length roi)-1) do
+			let (a,b) = roi.(r) in
+			ret.(a).(b) <- m.(a).(b)
+		done;ret;;
 
 	(* Binarization *)
 	(* Classic method of local threshold with mean, often efficient after
@@ -288,6 +274,27 @@ module Image_Processing =
 				i := !i + bloc_size
 			done;
 		ret;;
+
+	(* Display gabor filtered *)
+	(* fingerprint2.jpg : bloc_size = 8 | seg_level = 4100
+		 fingerprint1.jpg : bloc_size = 16 | seg_level = 4100
+		 ppf1.png : bloc_size = 12 | seg_level = 400 *)
+	let getGabor matrix bloc_size seg_level norm useROI =
+		(* Classic segmentation *)
+		let seg = ref (segmentation matrix bloc_size seg_level) in
+		(* Sobel-ed Matrix *)
+		let sobel_seg = sobel_segmentation !seg in
+		(* Get ROI *)
+		let roi = getROI sobel_seg in
+		(* Normalisation *)
+		if norm then seg := (normalisation !seg);
+		(* Gabor filters *)
+		let gabor = apply_gabor !seg bloc_size in
+		Testing.align_matrix gabor;
+		(* Isolate ROI *)
+		let ret = ref gabor in
+		if useROI then ret := keepROI gabor roi;
+		!ret;;
 
 	(* Reverse binary image *)
 	let reverseBin m =
@@ -399,5 +406,48 @@ module Image_Processing =
 			prev := Images.copyMatrix cur_m;
 			Testing.displayBin cur_m;
 		done;cur_m;;
+
+	(* Display final result *)
+	(* fingerprint2.jpg : bloc_size = 8 | seg_level = 4100
+		 fingerprint1.jpg : bloc_size = 16 | seg_level = 4100
+		 ppf1.png : bloc_size = 12 | seg_level = 400 *)
+	let fullThining matrix bloc_size seg_level norm =
+		(* Classic segmentation *)
+		print_string "\nSegmentation ...";
+		let seg = ref (segmentation matrix bloc_size seg_level) in
+		(* Sobel-ed Matrix *)
+		print_string "\nSobel Segmentation ...";
+		let sobel_seg = sobel_segmentation !seg in
+		(* Get ROI *)
+		print_string "\nGet ROI ...";
+		let roi = getROI sobel_seg in
+		(* Normalisation *)
+		if norm then
+			(print_string "\nNormalisation ...";
+			seg := (normalisation !seg));
+		(* Gabor filters *)
+		print_string "\nApply Gabor filters ...";
+		let gabor = apply_gabor !seg bloc_size in
+		Testing.align_matrix gabor;
+		(* Isolate ROI *)
+		print_string "\nExtract ROI ...";
+		let gabor_roi = keepROI gabor roi in
+		(* Binarize *)
+		print_string "\nBinarize Image ...";
+		let bin = binarization gabor_roi 12 in
+		(* Isolate BIN ROI *)
+		print_string "\nExtract ROI from binarized image ...";
+		let bin_roi = keepROI_bin bin roi in
+		(* Reverse BIN *)
+		print_string "\nReverse binazized image ...";
+		let bin_rev = reverseBin bin_roi in
+		Testing.displayBin bin_rev;
+		(* Do thinning *)
+		print_string "\nApply thinning algorithm ...";
+		let thin = thinning bin_rev in
+		(* Reverse thinned image *)
+		print_string "\nReverse thinned image ...";
+		let thin_rev = reverseBin thin in
+		thin_rev;;
 
 	end

@@ -27,11 +27,11 @@ Testing.displayAnyMatrix norm;;
 
 (* Gabor - Contextual Filtering *)
 let grey_test = Images.imageToGreyScale Testing.test_image;;
-let gabor = Image_Processing.do_everything grey_test.matrix 12 400. false true;;
+let gabor = Image_Processing.getGabor grey_test.matrix 12 400. false true;;
 
 (* Binarization *)
 let grey_test = Images.imageToGreyScale Testing.test_image;;
-let gabor = Image_Processing.do_everything grey_test.matrix 12 400. false true;;
+let gabor = Image_Processing.getGabor grey_test.matrix 12 400. false true;;
 let bin = Image_Processing.binarization gabor 12;;
 Testing.displayBin bin;;
 
@@ -57,9 +57,7 @@ Testing.displayBin thin;;
 
 (* Thining *)
 let grey_test = Images.imageToGreyScale Testing.test_image;;
-let gabor = Image_Processing.do_everything grey_test.matrix 12 400. false true;;
-let bin = Image_Processing.binarization gabor 12;;
-let thin = Image_Processing.thinning bin;;
+let thin = Image_Processing.fullThining grey_test.matrix 12 400. false;;
 Testing.displayBin thin;;
 
 /!\ Use Otso's threshold method
