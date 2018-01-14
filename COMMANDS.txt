@@ -60,4 +60,9 @@ let grey_test = Images.imageToGreyScale Testing.test_image;;
 let thin = Image_Processing.fullThining grey_test.matrix 12 400. false;;
 Testing.displayBin thin;;
 
+(* Minutae - Crossing Number *)
+let grey_test = Images.imageToGreyScale Testing.test_image;;
+let thin = Image_Processing.fullThining grey_test.matrix 12 400. false;;
+Minutae.display_minutae thin;;
+
 /!\ Use Otso's threshold method
