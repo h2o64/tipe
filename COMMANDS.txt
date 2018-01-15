@@ -17,7 +17,7 @@ Frequency.interactive_signature Testing.test_image 16;;
 
 (* Segmentation - fingerprint2 *)
 let grey_test = Images.imageToGreyScale Testing.test_image;;
-let seg = Image_Processing.segmentation grey_test.matrix 12 400.;;
+let seg = Image_Processing.segmentation grey_test.matrix 16 687.;;
 Testing.displayAnyMatrix seg;;
 
 (* Normalisation *)
@@ -27,12 +27,13 @@ Testing.displayAnyMatrix norm;;
 
 (* Gabor - Contextual Filtering *)
 let grey_test = Images.imageToGreyScale Testing.test_image;;
-let gabor = Image_Processing.getGabor grey_test.matrix 12 400. false true;;
+let gabor = Image_Processing.getGabor grey_test.matrix 16 687. false true;;
+Testing.displayAnyMatrix gabor;;
 
 (* Binarization *)
 let grey_test = Images.imageToGreyScale Testing.test_image;;
-let gabor = Image_Processing.getGabor grey_test.matrix 12 400. false true;;
-let bin = Image_Processing.binarization gabor 12;;
+let gabor = Image_Processing.getGabor grey_test.matrix 16 687. false true;;
+let bin = Image_Processing.binarization gabor 16;;
 Testing.displayBin bin;;
 
 (* Circle Test - Image Movement Difference *)
@@ -57,12 +58,12 @@ Testing.displayBin thin;;
 
 (* Thining *)
 let grey_test = Images.imageToGreyScale Testing.test_image;;
-let thin = Image_Processing.fullThining grey_test.matrix 12 400. false;;
+let thin = Image_Processing.fullThining grey_test.matrix 16 687. false;;
 Testing.displayBin thin;;
 
 (* Minutae - Crossing Number *)
 let grey_test = Images.imageToGreyScale Testing.test_image;;
-let thin = Image_Processing.fullThining grey_test.matrix 12 400. false;;
+let thin = Image_Processing.fullThining grey_test.matrix 16 687. false;;
 Minutae.display_minutae thin;;
 
 /!\ Use Otso's threshold method
