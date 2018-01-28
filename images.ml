@@ -13,6 +13,7 @@ module type IMAGES =
     val getHW : 'a matrix -> int * int
     val matrixApply : ('a -> 'b) -> 'a matrix -> 'b matrix
     val import_image : string -> Graphics.color image
+    val matrixToImage : 'a matrix -> 'a image
     val getFormat : int -> int -> string
     val color_of_rgbint : Graphics.color -> int * int * int
     val greyscale_of_rgb : Graphics.color -> float
@@ -63,6 +64,10 @@ module Images : IMAGES =
 
 		(* Import an image *)
 		let import_image file = let matrix = lire_image file in
+				{height = getHeight matrix; width = getWidth matrix; matrix = matrix};;
+
+		(* Matrix as image *)
+		let matrixToImage matrix =
 				{height = getHeight matrix; width = getWidth matrix; matrix = matrix};;
 
 		(* Get the right image format *)

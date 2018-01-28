@@ -13,6 +13,8 @@ module Minutae =
 			 3 = bifurcation
 			 4 = unknown *)
 		type cn_pix = { x : int ; y : int ; typ : int };;
+		(* x | y | orientation *)
+		type minutae = {x : int ; y : int ; teta : float };;
 
 		(* All paired pixels in 3x3 *)
 		let cells = [|(-1, -1);(-1, 0);(-1, 1);(0, 1);(1, 1);(1, 0);(1, -1);(0, -1)|];;
@@ -65,4 +67,12 @@ module Minutae =
 				done;
 			done;;
 
+		(* Get minutae matrix *)
+		let getMinutaeMatrix matrix =
+			let cn_matrix = cn_global matrix in
+			let orientation =	(Orientation.getAngles (Images.applyFunctMatrix matrix float_of_int) 1) in
+			let cnToMinutae_local (cn : cn_pix) = {x = cn.x ; y = cn.y ; teta = orientation.(cn.x).(cn.y)} in
+			(Images.applyFunctMatrix cn_matrix cnToMinutae_local);;
+			
+			
 	end
