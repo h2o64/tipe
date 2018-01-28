@@ -15,6 +15,67 @@
 module Image_Processing : IMAGE_PROCESSING = *)
 module Image_Processing =
   struct
+		(* Get histogramm of a greyscale image *)
+		let getHistogramm m =
+			let (h,w) = Images.getHW m in
+			let occurs = Array.make 256 0. in
+			for i = 0 to (h-1) do
+				for j = 0 to (w-1) do
+					let value = occurs.(int_of_float (m.(i).(j))) in
+					occurs.(int_of_float (m.(i).(j))) <- value +. 1.;
+				done;
+			done;
+			(* Divide occurence *)
+			let f a = (a /. (float_of_int (h*w))) in
+			Array.map f occurs;;
+
+		(* Get optimal Otsu's threshold *)
+		(* TODO: Optimize me please *)
+		let getOptimalThreshold m =
+			let histogram = getHistogramm m in
+			let potential_ret = Array.make 255 0. in
+			(* Get max of an array *)
+			let max_array arr = Array.fold_left max arr.(0) arr in
+			(* Detect nan *)
+			let is_nan x = (compare x nan = 0) in
+			(* Functions for w *)
+			let get_w0 t =
+				let ret = ref 0. in
+				for i = 0 to t-1 do
+					ret := !ret +. histogram.(i)
+				done;!ret in
+			let get_w1 t =
+				let ret = ref 0. in
+				for i = t to 255 do
+					ret := !ret +. histogram.(i)
+				done;!ret in
+			(* Functions for u *)
+			let get_u0 t w0cur =
+				let ret = ref 0. in
+				for i = 0 to t-1 do
+					ret := !ret +. (((float_of_int i) *. histogram.(i))/. !w0cur)
+				done;!ret in
+			let get_u1 t w1cur =
+				let ret = ref 0. in
+				for i = t to 255 do
+					ret := !ret +. (((float_of_int i) *. histogram.(i))/. !w1cur)
+				done;!ret in 
+			(* Initial values *)
+			let w0 = ref (get_w0 0) in
+			let w1 = ref (get_w1 0) in
+			let u0 = ref (get_u0 0 w0) in
+			let u1 = ref (get_u1 0 w1) in
+			(* Actual loop *)
+			for t = 1 to 255 do
+				w0 := get_w0 t;
+				w1 := get_w1 t;
+				u0 := get_u0 t w0;
+				u1 := get_u1 t w1;
+				let tmp = (!w0 *. !w1) *. ((!u0 -. !u1)*.(!u0 -. !u1)) in
+				potential_ret.(t-1)<-(if (is_nan tmp) then 0. else tmp;);
+			done;
+			(max_array potential_ret);;
+
 		(* Mean and variance based method of segmentation *)
 		let segmentation m bloc_size threshold =
 			let (h,w) = Images.getHW m in
@@ -72,8 +133,8 @@ module Image_Processing =
 
 	(* Image normalisation with histogram equalization *)
 	let normalisation m =
-			let (h,w) = Images.getHW m in
-		(* Get occurence of each grey level *)
+		let (h,w) = Images.getHW m in
+		(* Get image's histogramm *)
 		let occurs = Array.make 256 0 in
 		for i = 0 to (h-1) do
 			for j = 0 to (w-1) do
