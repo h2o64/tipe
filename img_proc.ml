@@ -15,100 +15,6 @@
 module Image_Processing : IMAGE_PROCESSING = *)
 module Image_Processing =
   struct
-		(* Get optimal Otsu's threshold *)
-		let getOptimalThreshold m bloc_size =
-			(* Detect nan *)
-			let is_nan x = (compare x nan = 0) in
-			(* Create a new matrix based on bloc average values *)
-			let raw_blocked_m = Images.cutInBlocs m bloc_size in
-			let (h,w) = Images.getHW raw_blocked_m in
-			let bloc_m_val = Array.make_matrix h w 0 in
-			for i = 0 to (h-1) do
-				for j = 0 to (w-1) do
-					bloc_m_val.(i).(j) <- int_of_float (Images.getMatrixAv raw_blocked_m.(i).(j));
-				done;
-			done;
-			(* Get neighborhood average value *)
-			let bloc_m_av = Array.make_matrix h w 0 in
-			let cells = [|(-1, -1);(-1, 0);(-1, 1);(0, 1);(1, 1);(1, 0);(1, -1);(0, -1)|] in
-			for i = 0 to (h-1) do
-				for j = 0 to (w-1) do
-					let local_av = ref 0. in
-					let count = ref 0. in
-					for k = 0 to 7 do
-						let (a,b) = cells.(k) in
-						let (x,y) = (1-a,1-b) in
-						if (x > 0) && (x < h) && (y > 0) && (y < w) then
-							(local_av := !local_av +. (float_of_int bloc_m_val.(x).(y));
-							count := !count +. 1.);
-					done;
-					(* Parse in result matrix *)
-					bloc_m_av.(i).(j) <- (int_of_float (!local_av /. !count));
-				done;
-			done;
-			(* Get f(i,j) frequency of a couple *)
-			let frequency_m = Array.make_matrix 255 255 0 in
-			for k = 0 to (h-1) do
-				for l = 0 to (w-1) do
-					let i = bloc_m_val.(k).(l) in
-					let j = bloc_m_av.(k).(l) in
-					frequency_m.(i).(j) <- (frequency_m.(i).(j) + 1);
-				done;
-			done;
-			(* Normalize f(i,j) *)
-			let p_m = Array.make_matrix 255 255 0. in
-			for i = 0 to 254 do
-				for j = 0 to 254 do
-					p_m.(i).(j) <- (float_of_int frequency_m.(i).(j)) /. (float_of_int (h*w));
-				done;
-			done;
-			(* Calculate all we need *)
-			let w0 s t =
-				let ret = ref 0. in
-				for i = 0 to s-1 do
-					for j = 0 to t-1 do
-						ret := !ret +. p_m.(i).(j)
-					done;
-				done; !ret in
-			let ui s t =
-				let ret = ref 0. in
-				for i = 0 to s-1 do
-					for j = 0 to t-1 do
-						ret := !ret +. (float_of_int i) *. p_m.(i).(j)
-					done;
-				done; !ret in
-			let uj s t =
-				let ret = ref 0. in
-				for i = 0 to s-1 do
-					for j = 0 to t-1 do
-						ret := !ret +. (float_of_int j) *. p_m.(i).(j)
-					done;
-				done; !ret in
-			let uT s t =
-				let ret_a = ref 0. in
-				let ret_b = ref 0. in
-				for i = 0 to 254 do
-					for j = 0 to 254 do
-						ret_a := !ret_a +. (float_of_int i) *. p_m.(i).(j);
-						ret_b := !ret_b +. (float_of_int j) *. p_m.(i).(j)
-					done;
-				done; (!ret_a,!ret_b) in
-			let trB s t =
-				let (uT_i,uT_j) = uT s t in
-				let ui_ret = ui s t in
-				let uj_ret = uj s t in
-				let w0_ret = w0 s t in
-				((((uT_i *. w0_ret -. ui_ret)**2.) +. ((uT_j *. w0_ret -. uj_ret)**2.)) /. (w0_ret *. (1. -. w0_ret))) in
-			(* Get all traces *)
-			let cur_max = ref (trB 0 0) in
-			for s = 0 to 254 do
-				for t = 0 to 254 do
-					let cur_trace = trB s t in
-					if (cur_trace > !cur_max) && not (is_nan cur_trace) then cur_max := cur_trace;
-				done;
-			done;
-			!cur_max;;
-				
 
 		(* Mean and variance based method of segmentation *)
 		let segmentation m bloc_size threshold =
@@ -194,6 +100,65 @@ module Image_Processing =
 				ret.(i).(j) <- transf.(int_of_float m.(i).(j))
 			done;
 		done;
+		ret;;
+
+		(* Morphology and gradient based method of segmentation *)
+		let segmentation_gradient m bloc_size threshold =
+			let ret = Images.copyMatrix m in
+			(* let m_normalised = normalisation m in *)
+			let blocked_m = Images.cutInBlocs m bloc_size in
+			let (h,w) = Images.getHW blocked_m in
+			(* Get Gradient *)
+			let gx = Convolution.convolve_matrix Orientation.hX m in
+			let gy = Convolution.convolve_matrix Orientation.hY m in
+			let getGrad x y i j =  (i*bloc_size+x,j*bloc_size+y) in
+			for i = 0 to (h-2) do
+				for j = 0 to (w-2) do
+					(* Get mean *)
+					let mX = ref 0. in
+					let mY = ref 0. in
+					for x = 0 to bloc_size do
+						for y = 0 to bloc_size do
+							let (a,b) = getGrad x y i j in
+							mX := !mX +. gx.(a).(b);
+							mY := !mY +. gy.(a).(b);
+						done;
+					done;
+					mX := !mX /. (float_of_int (bloc_size*bloc_size));
+					mY := !mY /. (float_of_int (bloc_size*bloc_size));
+					(* Get standard deviations *)
+					let stdx = ref 0. in
+					let stdy = ref 0. in
+					for x = 0 to bloc_size do
+						for y = 0 to bloc_size do
+							let (a,b) = getGrad x y i j in
+							stdx := !mX +. (gx.(a).(b) -. !mX)**2.;
+							stdy := !mY +. (gy.(a).(b) -. !mY)**2.;
+						done;
+					done;
+					stdx := sqrt (!stdx /. (float_of_int (bloc_size*bloc_size)));
+					stdy := sqrt (!stdy /. (float_of_int (bloc_size*bloc_size)));
+					(* Remove the bloc if under the threshold *)
+					if (!stdx +. !stdy) < threshold then
+						(for x = 0 to bloc_size do
+							for y = 0 to bloc_size do
+								let (a,b) = getGrad x y i j in
+								ret.(a).(b) <- 255.
+							done;
+						done;)
+				done;
+			done;
+			(* Remove borders *)
+			for i = 0 to h-1 do
+				for j = w-bloc_size to w-1 do
+					ret.(i).(j) <- 255.
+				done;
+			done;
+			for j = 0 to w-1 do
+				for i = h-bloc_size to h-1 do
+					ret.(i).(j) <- 255.
+				done;
+			done;
 		ret;;
 
 	(* Kernel from function *)
