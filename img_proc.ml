@@ -15,66 +15,100 @@
 module Image_Processing : IMAGE_PROCESSING = *)
 module Image_Processing =
   struct
-		(* Get histogramm of a greyscale image *)
-		let getHistogramm m =
-			let (h,w) = Images.getHW m in
-			let occurs = Array.make 256 0. in
-			for i = 0 to (h-1) do
-				for j = 0 to (w-1) do
-					let value = occurs.(int_of_float (m.(i).(j))) in
-					occurs.(int_of_float (m.(i).(j))) <- value +. 1.;
-				done;
-			done;
-			(* Divide occurence *)
-			let f a = (a /. (float_of_int (h*w))) in
-			Array.map f occurs;;
-
 		(* Get optimal Otsu's threshold *)
-		(* TODO: Optimize me please *)
-		let getOptimalThreshold m =
-			let histogram = getHistogramm m in
-			let potential_ret = Array.make 255 0. in
-			(* Get max of an array *)
-			let max_array arr = Array.fold_left max arr.(0) arr in
+		let getOptimalThreshold m bloc_size =
 			(* Detect nan *)
 			let is_nan x = (compare x nan = 0) in
-			(* Functions for w *)
-			let get_w0 t =
-				let ret = ref 0. in
-				for i = 0 to t-1 do
-					ret := !ret +. histogram.(i)
-				done;!ret in
-			let get_w1 t =
-				let ret = ref 0. in
-				for i = t to 255 do
-					ret := !ret +. histogram.(i)
-				done;!ret in
-			(* Functions for u *)
-			let get_u0 t w0cur =
-				let ret = ref 0. in
-				for i = 0 to t-1 do
-					ret := !ret +. (((float_of_int i) *. histogram.(i))/. !w0cur)
-				done;!ret in
-			let get_u1 t w1cur =
-				let ret = ref 0. in
-				for i = t to 255 do
-					ret := !ret +. (((float_of_int i) *. histogram.(i))/. !w1cur)
-				done;!ret in 
-			(* Initial values *)
-			let w0 = ref (get_w0 0) in
-			let w1 = ref (get_w1 0) in
-			let u0 = ref (get_u0 0 w0) in
-			let u1 = ref (get_u1 0 w1) in
-			(* Actual loop *)
-			for t = 1 to 255 do
-				w0 := get_w0 t;
-				w1 := get_w1 t;
-				u0 := get_u0 t w0;
-				u1 := get_u1 t w1;
-				let tmp = (!w0 *. !w1) *. ((!u0 -. !u1)*.(!u0 -. !u1)) in
-				potential_ret.(t-1)<-(if (is_nan tmp) then 0. else tmp;);
+			(* Create a new matrix based on bloc average values *)
+			let raw_blocked_m = Images.cutInBlocs m bloc_size in
+			let (h,w) = Images.getHW raw_blocked_m in
+			let bloc_m_val = Array.make_matrix h w 0 in
+			for i = 0 to (h-1) do
+				for j = 0 to (w-1) do
+					bloc_m_val.(i).(j) <- int_of_float (Images.getMatrixAv raw_blocked_m.(i).(j));
+				done;
 			done;
-			(max_array potential_ret);;
+			(* Get neighborhood average value *)
+			let bloc_m_av = Array.make_matrix h w 0 in
+			let cells = [|(-1, -1);(-1, 0);(-1, 1);(0, 1);(1, 1);(1, 0);(1, -1);(0, -1)|] in
+			for i = 0 to (h-1) do
+				for j = 0 to (w-1) do
+					let local_av = ref 0. in
+					let count = ref 0. in
+					for k = 0 to 7 do
+						let (a,b) = cells.(k) in
+						let (x,y) = (1-a,1-b) in
+						if (x > 0) && (x < h) && (y > 0) && (y < w) then
+							(local_av := !local_av +. (float_of_int bloc_m_val.(x).(y));
+							count := !count +. 1.);
+					done;
+					(* Parse in result matrix *)
+					bloc_m_av.(i).(j) <- (int_of_float (!local_av /. !count));
+				done;
+			done;
+			(* Get f(i,j) frequency of a couple *)
+			let frequency_m = Array.make_matrix 255 255 0 in
+			for k = 0 to (h-1) do
+				for l = 0 to (w-1) do
+					let i = bloc_m_val.(k).(l) in
+					let j = bloc_m_av.(k).(l) in
+					frequency_m.(i).(j) <- (frequency_m.(i).(j) + 1);
+				done;
+			done;
+			(* Normalize f(i,j) *)
+			let p_m = Array.make_matrix 255 255 0. in
+			for i = 0 to 254 do
+				for j = 0 to 254 do
+					p_m.(i).(j) <- (float_of_int frequency_m.(i).(j)) /. (float_of_int (h*w));
+				done;
+			done;
+			(* Calculate all we need *)
+			let w0 s t =
+				let ret = ref 0. in
+				for i = 0 to s-1 do
+					for j = 0 to t-1 do
+						ret := !ret +. p_m.(i).(j)
+					done;
+				done; !ret in
+			let ui s t =
+				let ret = ref 0. in
+				for i = 0 to s-1 do
+					for j = 0 to t-1 do
+						ret := !ret +. (float_of_int i) *. p_m.(i).(j)
+					done;
+				done; !ret in
+			let uj s t =
+				let ret = ref 0. in
+				for i = 0 to s-1 do
+					for j = 0 to t-1 do
+						ret := !ret +. (float_of_int j) *. p_m.(i).(j)
+					done;
+				done; !ret in
+			let uT s t =
+				let ret_a = ref 0. in
+				let ret_b = ref 0. in
+				for i = 0 to 254 do
+					for j = 0 to 254 do
+						ret_a := !ret_a +. (float_of_int i) *. p_m.(i).(j);
+						ret_b := !ret_b +. (float_of_int j) *. p_m.(i).(j)
+					done;
+				done; (!ret_a,!ret_b) in
+			let trB s t =
+				let (uT_i,uT_j) = uT s t in
+				let ui_ret = ui s t in
+				let uj_ret = uj s t in
+				let w0_ret = w0 s t in
+				((((uT_i *. w0_ret -. ui_ret)**2.) +. ((uT_j *. w0_ret -. uj_ret)**2.)) /. (w0_ret *. (1. -. w0_ret))) in
+			(* Get all traces *)
+			let cur_max = ref (trB 0 0) in
+			for s = 0 to 254 do
+				for t = 0 to 254 do
+					let cur_trace = trB s t in
+					if (cur_trace > !cur_max) && not (is_nan cur_trace) then cur_max := cur_trace;
+				done;
+			done;
+			!cur_max;;
+				
 
 		(* Mean and variance based method of segmentation *)
 		let segmentation m bloc_size threshold =

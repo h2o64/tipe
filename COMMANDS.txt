@@ -20,6 +20,13 @@ let grey_test = Images.imageToGreyScale Testing.test_image;;
 let seg = Image_Processing.segmentation grey_test.matrix 16 687.;;
 Testing.displayAnyMatrix seg;;
 
+(* Sobel segmentation *)
+let grey_test = Images.imageToGreyScale Testing.test_image;;
+let seg = Image_Processing.segmentation grey_test.matrix 12 400.;;
+let sobel_seg = Image_Processing.sobel_segmentation seg;;
+Testing.align_matrix sobel_seg;
+Testing.displayAnyMatrix sobel_seg;;
+
 (* Normalisation *)
 let grey_test = Images.imageToGreyScale Testing.test_image;;
 let norm = Image_Processing.normalisation grey_test.matrix;;

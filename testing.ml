@@ -11,6 +11,7 @@ module type TESTING =
 		val align_matrix : float array array -> unit
 		val displayBin : int array array -> unit
     val simpleBinarize : float Images.matrix -> int array array
+    val loopCounter : int -> int -> int -> int -> unit
   end;;
 
 module Testing : TESTING =
@@ -91,4 +92,12 @@ module Testing : TESTING =
 					if m.(i).(j) < tmp then ret.(i).(j) <- 1;
 				done;
 			done;ret;;
+
+	let loopCounter i j i_max j_max =
+		let total = float_of_int (i_max*j_max) in
+		let cur = float_of_int (i*i_max + j) in
+		print_string "[DBG] Current loop at ";
+		print_float ((cur /. total) *. 100.);
+		print_string "0% \n";;
+
 	end
