@@ -16,6 +16,89 @@ module Image_Processing : IMAGE_PROCESSING = *)
 module Image_Processing =
   struct
 
+		(* Get optimal Otsu's threshold *)
+		let getOptimalThreshold m bloc_size =
+			(* Create a new matrix based on bloc average values *)
+			let raw_blocked_m = Images.cutInBlocs m bloc_size in
+			let (h,w) = Images.getHW raw_blocked_m in
+			let bloc_m_val = Array.make_matrix h w 0. in
+			for i = 0 to (h-1) do
+				for j = 0 to (w-1) do
+					bloc_m_val.(i).(j) <- (Images.getMatrixAv raw_blocked_m.(i).(j));
+				done;
+			done;
+			(* Get neighborhood grey gradient *)
+			let bloc_m_avgrad = Array.make_matrix h w 0. in
+			let cells = [|(-1, -1);(-1, 0);(-1, 1);(0, 1);(1, 1);(1, 0);(1, -1);(0, -1)|] in
+			for i = 0 to (h-1) do
+				for j = 0 to (w-1) do
+					(* Get 8's neighborhood average *)
+					let local_av = ref 0. in
+					let count = ref 0. in
+					for k = 0 to 7 do
+						let (a,b) = cells.(k) in
+						let (x,y) = (1-a,1-b) in
+						if (x > 0) && (x < h) && (y > 0) && (y < w) then
+							(local_av := !local_av +. bloc_m_val.(x).(y);
+							count := !count +. 1.);
+					done;
+					(* Get gradient *)
+					local_av := abs_float (bloc_m_val.(i).(j) -. !local_av); 
+					(* Parse in result matrix *)
+					bloc_m_avgrad.(i).(j) <- (!local_av /. !count);
+				done;
+			done;
+			(* Get f(i,j) frequency of a couple *)
+			let frequency_m = Array.make_matrix 255 255 0 in
+			for k = 0 to (h-1) do
+				for l = 0 to (w-1) do
+					let i = int_of_float bloc_m_val.(k).(l) in
+					let j = int_of_float bloc_m_avgrad.(k).(l) in
+					frequency_m.(i).(j) <- (frequency_m.(i).(j) + 1);
+				done;
+			done;
+			(* Calculate integral images *)
+			let iiN = Array.make_matrix 255 255 0. in
+			let iiO = Array.make_matrix 255 255 0. in
+			let iiG = Array.make_matrix 255 255 0. in
+			let trace = ref (-1.) in
+			let sum_matrix x y mode =
+				let ret = ref 0 in
+				for i = 0 to x do
+					for j = 0 to y do
+						if mode = 1 then ret := !ret + frequency_m.(i).(j) (* Mode N *)
+						else if mode = 2 then ret := !ret + i * frequency_m.(i).(j) (* Mode O *)
+						else ret := !ret + j * frequency_m.(i).(j); (* Mode G *)
+					done;
+				done;!ret in
+			let f s t ii_in =
+				ii_in.(s-1).(t-1) +. ii_in.(254).(0) -. ii_in.(254).(t-1) -. ii_in.(s-1).(0) in
+			let size = float_of_int (h*w) in
+			for x = 0 to 254 do
+				for y = 0 to 254 do
+					(* DEBUG *)
+					Testing.loopCounter x y 254 254;
+					(* Image Integrales *)
+					iiN.(x).(y) <- float_of_int (sum_matrix x y 1);
+					iiO.(x).(y) <- float_of_int (sum_matrix x y 2);
+					iiG.(x).(y) <- float_of_int (sum_matrix x y 3);
+					(* Vectors *)
+					let (u00,u01) = ((iiO.(x).(y) /. iiN.(x).(y)),(iiG.(x).(y) /. iiN.(x).(y))) in
+					let (u10,u11) = (((f (x+1) (y+1) iiO) /. (f (x+1) (y+1) iiN)),
+													((f (x+1) (y+1) iiG) /. (f (x+1) (y+1) iiN))) in
+					let (uT0,uT1) = ((iiO.(x).(y) /. size),(iiG.(x).(y) /. size)) in
+					(* Probabilities *)
+					let p0 = (iiN.(x).(y) /. size) in
+					let p1 = ((f (x+1) (y+1) iiN) /. size) in
+					(* Get trace *)
+					let cur_trace = p0 *. (((u00 -. uT0)**2.) +. ((u01 -. uT1)**2.))
+													+. p1 *. (((u10 -. uT0)**2.) +. ((u11 -. uT1)**2.)) in
+					if cur_trace > !trace then trace := cur_trace;
+				done;
+			done;
+			!trace;;
+					
+
 		(* Mean and variance based method of segmentation *)
 		let segmentation m bloc_size threshold =
 			let (h,w) = Images.getHW m in
