@@ -260,8 +260,8 @@ module Image_Processing =
 		let s = sin angle in
 		let yangle x y = x*.c +. y*.s in
 		let xangle x y = (-1.) *. x *.s +. y*.c in
-		let xsigma_sqrd = 25. in
-		let ysigma_sqrd = 25. in
+		let xsigma_sqrd = 16. in
+		let ysigma_sqrd = 16. in
 		let funct x y =
 			(-0.5) *. ((((xangle x y)**2.) /. xsigma_sqrd) +. (((yangle x y)**2.) /. ysigma_sqrd)) in
 		let signal x y = cos (2. *. Poincare.pi *. freq *. (xangle x y)) in
@@ -571,7 +571,7 @@ module Image_Processing =
 		let gabor_roi = keepROI gabor roi in
 		(* Binarize *)
 		print_string "\nBinarize Image ...";
-		let bin = binarization gabor_roi 12 in
+		let bin = binarization gabor_roi bloc_size in
 		(* Isolate BIN ROI *)
 		print_string "\nExtract ROI from binarized image ...";
 		let bin_roi = keepROI_bin bin roi in

@@ -34,12 +34,12 @@ Testing.displayAnyMatrix norm;;
 
 (* Gabor - Contextual Filtering *)
 let grey_test = Images.imageToGreyScale Testing.test_image;;
-let gabor = Image_Processing.getGabor grey_test.matrix 16 687. false true;;
+let gabor = Image_Processing.getGabor grey_test.matrix 16 687. true true;;
 Testing.displayAnyMatrix gabor;;
 
 (* Binarization *)
 let grey_test = Images.imageToGreyScale Testing.test_image;;
-let gabor = Image_Processing.getGabor grey_test.matrix 16 687. false true;;
+let gabor = Image_Processing.getGabor grey_test.matrix 16 687. true true;;
 let bin = Image_Processing.binarization gabor 16;;
 Testing.displayBin bin;;
 
@@ -65,12 +65,12 @@ Testing.displayBin thin;;
 
 (* Thining *)
 let grey_test = Images.imageToGreyScale Testing.test_image;;
-let thin = Image_Processing.fullThining grey_test.matrix 16 687. false;;
+let thin = Image_Processing.fullThining grey_test.matrix 16 687. true;;
 Testing.displayBin thin;;
 
 (* Minutae - Crossing Number *)
 let grey_test = Images.imageToGreyScale Testing.test_image;;
-let thin = Image_Processing.fullThining grey_test.matrix 16 687. false;;
+let thin = Image_Processing.fullThining grey_test.matrix 16 687. true;;
 Minutae.display_minutae thin;;
 
 /!\ Use Otso's threshold method
