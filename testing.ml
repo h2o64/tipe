@@ -12,6 +12,7 @@ module type TESTING =
 		val displayBin : int array array -> unit
     val simpleBinarize : float Images.matrix -> int array array
     val loopCounter : int -> int -> int -> int -> unit
+		val time : ('a -> 'b -> 'c) -> 'a -> 'b -> 'c
   end;;
 
 module Testing : TESTING =
@@ -93,11 +94,17 @@ module Testing : TESTING =
 				done;
 			done;ret;;
 
-	let loopCounter i j i_max j_max =
-		let total = float_of_int (i_max*j_max) in
-		let cur = float_of_int (i*i_max + j) in
-		print_string "[DBG] Current loop at ";
-		print_float ((cur /. total) *. 100.);
-		print_string "0% \n";;
+		let loopCounter i j i_max j_max =
+			let total = float_of_int (i_max*j_max) in
+			let cur = float_of_int (i*i_max + j) in
+			print_string "[DBG] Current loop at ";
+			print_float ((cur /. total) *. 100.);
+			print_string "0% \n";;
 
+		let time f x y =
+				let start = Unix.gettimeofday ()
+				in let res = f x y
+				in let stop = Unix.gettimeofday ()
+				in let () = Printf.printf "Execution time: %fs\n%!" (stop -. start)
+				in res;;
 	end
