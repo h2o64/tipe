@@ -1,6 +1,6 @@
-module type IMAGE_PROCESSING =
+(* module type IMAGE_PROCESSING =
   sig
-    val getOptimalThreshold : float Images.matrix -> int -> float
+    val getOptimalThreshold_otsu : float Images.matrix -> int -> float
     val segmentation :
       float Images.matrix -> int -> float -> float array array
     val normalisation : float Images.matrix -> float array array
@@ -36,115 +36,121 @@ module type IMAGE_PROCESSING =
       float Images.matrix -> int -> float -> bool -> int array array
   end;;
 
-module Image_Processing : IMAGE_PROCESSING =
+module Image_Processing : IMAGE_PROCESSING = *)
+module Image_Processing =
   struct
 
-		(* Get optimal Otsu's threshold *)
-		let getOptimalThreshold m bloc_size =
-			(* Create a new matrix based on bloc average values *)
-			let raw_blocked_m = Images.cutInBlocs m bloc_size in
-			let (h,w) = Images.getHW raw_blocked_m in
-			let bloc_m_val = Array.make_matrix h w 0. in
-			for i = 0 to (h-1) do
-				for j = 0 to (w-1) do
-					bloc_m_val.(i).(j) <- (Images.getMatrixAv raw_blocked_m.(i).(j));
-				done;
+	(* Get optimal Otsu's threshold *)
+	let getOptimalThreshold_otsu m bloc_size =
+		(* Create a new matrix based on bloc average values *)
+		let raw_blocked_m = Images.cutInBlocs m bloc_size in
+		let (h,w) = Images.getHW raw_blocked_m in
+		let bloc_m_val = Array.make_matrix h w 0. in
+		for i = 0 to (h-1) do
+			for j = 0 to (w-1) do
+				bloc_m_val.(i).(j) <- (Images.getMatrixAv raw_blocked_m.(i).(j));
 			done;
-			(* Get neighborhood grey gradient *)
-			let bloc_m_avgrad = Array.make_matrix h w 0. in
-			let cells = [|(-1, -1);(-1, 0);(-1, 1);(0, 1);(1, 1);(1, 0);(1, -1);(0, -1)|] in
-			for i = 0 to (h-1) do
-				for j = 0 to (w-1) do
-					(* Get 8's neighborhood average *)
-					let local_av = ref 0. in
-					let count = ref 0. in
-					for k = 0 to 7 do
-						let (a,b) = cells.(k) in
-						let (x,y) = (1-a,1-b) in
-						if (x > 0) && (x < h) && (y > 0) && (y < w) then
-							(local_av := !local_av +. bloc_m_val.(x).(y);
-							count := !count +. 1.);
-					done;
-					(* Get gradient *)
-					local_av := abs_float (bloc_m_val.(i).(j) -. !local_av); 
-					(* Parse in result matrix *)
-					bloc_m_avgrad.(i).(j) <- (!local_av /. !count);
+		done;
+		(* Get neighborhood grey gradient *)
+		let bloc_m_avgrad = Array.make_matrix h w 0. in
+		let cells = [|(-1, -1);(-1, 0);(-1, 1);(0, 1);(1, 1);(1, 0);(1, -1);(0, -1)|] in
+		for i = 0 to (h-1) do
+			for j = 0 to (w-1) do
+				(* Get 8's neighborhood average *)
+				let local_av = ref 0. in
+				let count = ref 0. in
+				for k = 0 to 7 do
+					let (a,b) = cells.(k) in
+					let (x,y) = (1-a,1-b) in
+					if (x > 0) && (x < h) && (y > 0) && (y < w) then
+						(local_av := !local_av +. bloc_m_val.(x).(y);
+						count := !count +. 1.);
 				done;
+				(* Get gradient *)
+				local_av := abs_float (bloc_m_val.(i).(j) -. !local_av); 
+				(* Parse in result matrix *)
+				bloc_m_avgrad.(i).(j) <- (!local_av /. !count);
 			done;
-			(* Get f(i,j) frequency of a couple *)
-			let frequency_m = Array.make_matrix 255 255 0. in
-			for k = 0 to (h-1) do
-				for l = 0 to (w-1) do
-					let i = int_of_float bloc_m_val.(k).(l) in
-					let j = int_of_float bloc_m_avgrad.(k).(l) in
-					frequency_m.(i).(j) <- (frequency_m.(i).(j) +. 1.);
-				done;
+		done;
+		(* Get f(i,j) frequency of a couple *)
+		let frequency_m = Array.make_matrix 255 255 0. in
+		for k = 0 to (h-1) do
+			for l = 0 to (w-1) do
+				let i = int_of_float bloc_m_val.(k).(l) in
+				let j = int_of_float bloc_m_avgrad.(k).(l) in
+				frequency_m.(i).(j) <- (frequency_m.(i).(j) +. 1.);
 			done;
-			(* Calculate integral images *)
-			let sN = Array.make_matrix 255 255 0. in
-			let sO = Array.make_matrix 255 255 0. in
-			let sG = Array.make_matrix 255 255 0. in
-			let iiN = Array.make_matrix 255 255 0. in
-			let iiO = Array.make_matrix 255 255 0. in
-			let iiG = Array.make_matrix 255 255 0. in
-			let trace = ref (-1.) in
-			(* Do the calculation of sum areas *)
-			for x = 0 to 254 do
-				for y = 0 to 254 do
-					let cur_freq = frequency_m.(x).(y) in
-					let (i,j) = (float_of_int x,float_of_int y) in
-					sN.(x).(y) <- if (x = 0) || (y = 0) then 0.
-												else  cur_freq +. sN.(x-1).(y) +. sN.(x-1).(y-1) +. sN.(x-1).(y-1);
-					sO.(x).(y) <- if (x = 0) || (y = 0) then 0.
-											else i *. (cur_freq +. sO.(x-1).(y) +. sO.(x-1).(y-1) +. sO.(x-1).(y-1));
-					sG.(x).(y) <- if (x = 0) || (y = 0) then 0.
-											else j *. (cur_freq +. sG.(x-1).(y) +. sG.(x-1).(y-1) +. sG.(x-1).(y-1));
-				done;
+		done;
+		(* Calculate integral images *)
+		let sN = Array.make_matrix 255 255 0. in
+		let sO = Array.make_matrix 255 255 0. in
+		let sG = Array.make_matrix 255 255 0. in
+		let iiN = Array.make_matrix 255 255 0. in
+		let iiO = Array.make_matrix 255 255 0. in
+		let iiG = Array.make_matrix 255 255 0. in
+		let trace = ref (-1.) in
+		(* Do the calculation of sum areas *)
+		for x = 0 to 254 do
+			for y = 0 to 254 do
+				let cur_freq = frequency_m.(x).(y) in
+				let (i,j) = (float_of_int x,float_of_int y) in
+				sN.(x).(y) <- if (x = 0) && (y = 0) then cur_freq
+											else if (x = 0) then cur_freq +. +. sN.(x).(y-1)
+											else if (y = 0) then cur_freq +. sN.(x-1).(y)
+											else cur_freq +. sN.(x-1).(y) +. sN.(x).(y-1) -. sN.(x-1).(y-1);
+				sO.(x).(y) <- if (x = 0) && (y = 0) then i*.cur_freq
+											else if (x = 0) then i*.cur_freq +. +. sO.(x).(y-1)
+											else if (y = 0) then i*.cur_freq +. sO.(x-1).(y)
+											else cur_freq +. sO.(x-1).(y) +. sO.(x).(y-1) -. sO.(x-1).(y-1);
+				sG.(x).(y) <- if (x = 0) && (y = 0) then j*.cur_freq
+											else if (x = 0) then j*.cur_freq +. +. sG.(x).(y-1)
+											else if (y = 0) then j*.cur_freq +. sG.(x-1).(y)
+											else j*.cur_freq +. sG.(x-1).(y) +. sG.(x).(y-1) -. sG.(x-1).(y-1);
 			done;
-			(* Get sum area in rectangles *)
-			for x = 0 to 254 do
-				for y = 0 to 254 do
-					if (x = 0) && (y = 0) then
-						(iiN.(x).(y) <- sN.(x).(y);
-						iiO.(x).(y) <- sO.(x).(y);
-						iiG.(x).(y) <- sG.(x).(y))
-					else if (x = 0) then
-						(iiN.(x).(y) <- sN.(x).(y) -. sN.(x).(y-1);
-						iiO.(x).(y) <- sO.(x).(y) -. sO.(x).(y-1);
-						iiG.(x).(y) <- sG.(x).(y) -. sG.(x).(y-1))
-					else if (y = 0) then
-						(iiN.(x).(y) <- sN.(x).(y) -. sN.(x-1).(y);
-						iiO.(x).(y) <- sO.(x).(y) -. sO.(x-1).(y);
-						iiG.(x).(y) <- sG.(x).(y) -. sG.(x-1).(y))
-					else
-						(iiN.(x).(y) <- sN.(x-1).(y-1) +. sN.(x).(y) -. sN.(x-1).(y) -. sN.(x).(y-1);
-						iiO.(x).(y) <- sO.(x-1).(y-1) +. sO.(x).(y) -. sO.(x-1).(y) -. sO.(x).(y-1);
-						iiG.(x).(y) <- sG.(x-1).(y-1) +. sG.(x).(y) -. sG.(x-1).(y) -. sG.(x).(y-1));
-				done;
+		done;
+		(* Get sum area in rectangles *)
+		for x = 0 to 254 do
+			for y = 0 to 254 do
+				if (x = 0) && (y = 0) then
+					(iiN.(x).(y) <- sN.(x).(y);
+					iiO.(x).(y) <- sO.(x).(y);
+					iiG.(x).(y) <- sG.(x).(y))
+				else if (x = 0) then
+					(iiN.(x).(y) <- sN.(x).(y) -. sN.(x).(y-1);
+					iiO.(x).(y) <- sO.(x).(y) -. sO.(x).(y-1);
+					iiG.(x).(y) <- sG.(x).(y) -. sG.(x).(y-1))
+				else if (y = 0) then
+					(iiN.(x).(y) <- sN.(x).(y) -. sN.(x-1).(y);
+					iiO.(x).(y) <- sO.(x).(y) -. sO.(x-1).(y);
+					iiG.(x).(y) <- sG.(x).(y) -. sG.(x-1).(y))
+				else
+					(iiN.(x).(y) <- sN.(x-1).(y-1) +. sN.(x).(y) -. sN.(x).(y-1) -. sN.(x-1).(y);
+					iiO.(x).(y) <- sO.(x-1).(y-1) +. sO.(x).(y) -. sO.(x).(y-1) -. sO.(x-1).(y);
+					iiG.(x).(y) <- sG.(x-1).(y-1) +. sG.(x).(y) -. sG.(x).(y-1) -. sG.(x-1).(y));
 			done;
-			let f s t ii_in =
-				ii_in.(s-1).(t-1) +. ii_in.(254).(0) -. ii_in.(254).(t-1) -. ii_in.(s-1).(0) in
-			let size = float_of_int (h*w) in
-			for x = 0 to 254 do
-				for y = 0 to 254 do
-					(* DEBUG *)
-					(* Testing.loopCounter x y 254 254; *)
-					(* Vectors *)
-					let (u00,u01) = ((iiO.(x).(y) /. iiN.(x).(y)),(iiG.(x).(y) /. iiN.(x).(y))) in
-					let (u10,u11) = (((f (x+1) (y+1) iiO) /. (f (x+1) (y+1) iiN)),
-													((f (x+1) (y+1) iiG) /. (f (x+1) (y+1) iiN))) in
-					let (uT0,uT1) = ((iiO.(x).(y) /. size),(iiG.(x).(y) /. size)) in
-					(* Probabilities *)
-					let p0 = (iiN.(x).(y) /. size) in
-					let p1 = ((f (x+1) (y+1) iiN) /. size) in
-					(* Get trace *)
-					let cur_trace = p0 *. (((u00 -. uT0)**2.) +. ((u01 -. uT1)**2.))
-													+. p1 *. (((u10 -. uT0)**2.) +. ((u11 -. uT1)**2.)) in
-					if cur_trace > !trace then trace := cur_trace;
-				done;
+		done;
+		let f s t ii_in =
+			ii_in.(s-1).(t-1) +. ii_in.(254).(0) -. ii_in.(254).(t-1) -. ii_in.(s-1).(0) in
+		let size = float_of_int (h*w) in
+		for x = 0 to 254 do
+			for y = 0 to 254 do
+				(* Vectors *)
+				let (u00,u01) = ((iiO.(x).(y) /. iiN.(x).(y)),(iiG.(x).(y) /. iiN.(x).(y))) in
+				let (u10,u11) = (((f (x+1) (y+1) iiO) /. (f (x+1) (y+1) iiN)),
+												((f (x+1) (y+1) iiG) /. (f (x+1) (y+1) iiN))) in
+				let (uT0,uT1) = ((iiO.(x).(y) /. size),(iiG.(x).(y) /. size)) in
+				(* Probabilities *)
+				let p0 = (iiN.(x).(y) /. size) in
+				let p1 = ((f (x+1) (y+1) iiN) /. size) in
+				(* Get trace *)
+				let cur_trace = p0 *. (((u00 -. uT0)**2.) +. ((u01 -. uT1)**2.))
+												+. p1 *. (((u10 -. uT0)**2.) +. ((u11 -. uT1)**2.)) in
+				(* Get maximal trace *)
+				if (cur_trace > !trace) then 
+					trace := cur_trace;
 			done;
-			!trace;;
-					
+		done;
+		!trace;;
 
 		(* Mean and variance based method of segmentation *)
 		let segmentation m bloc_size threshold =
@@ -524,7 +530,9 @@ module Image_Processing : IMAGE_PROCESSING =
 	(* fingerprint2.jpg : bloc_size = 8 | seg_level = 4100
 		 fingerprint1.jpg : bloc_size = 16 | seg_level = 4100
 		 ppf1.png : bloc_size = 12 | seg_level = 400 *)
-	let getGabor matrix bloc_size seg_level useROI fft =
+	let getGabor matrix bloc_size useROI fft =
+		(* Get optimal threshold *)
+		let seg_level = getOptimalThreshold_otsu matrix bloc_size in
 		(* Classic segmentation *)
 		let seg = segmentation matrix bloc_size seg_level in
 		(* Sobel-ed Matrix *)
@@ -645,10 +653,13 @@ module Image_Processing : IMAGE_PROCESSING =
 		done;cur_m;;
 
 	(* Display final result *)
-	(* fingerprint2.jpg : bloc_size = 8 | seg_level = 4100
-		 fingerprint1.jpg : bloc_size = 16 | seg_level = 4100
-		 ppf1.png : bloc_size = 12 | seg_level = 400 *)
-	let fullThining matrix bloc_size seg_level fft =
+	(* fingerprint2.jpg : bloc_size = 8
+		 fingerprint1.jpg : bloc_size = 16
+		 ppf1.png : bloc_size = 12 *)
+	let fullThining matrix bloc_size fft =
+		(* Get optimal threshold *)
+		print_string "\nGet optimal threshold ...";
+		let seg_level = getOptimalThreshold_otsu matrix bloc_size in
 		(* Classic segmentation *)
 		print_string "\nSegmentation ...";
 		let seg = segmentation matrix bloc_size seg_level in

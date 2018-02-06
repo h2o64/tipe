@@ -12,12 +12,14 @@ Poincare.display_sp Testing.test_image 16 48 Poincare.getAngleBetween_bis true;;
 
 (* Segmentation - fingerprint2 *)
 let grey_test = Images.imageToGreyScale Testing.test_image;;
-let seg = Image_Processing.segmentation grey_test.matrix 16 687.;;
+let seg_level = Image_Processing.getOptimalThreshold_otsu grey_test.matrix 16;;
+let seg = Image_Processing.segmentation grey_test.matrix 16 seg_level;;
 Testing.displayAnyMatrix seg;;
 
 (* Sobel segmentation *)
 let grey_test = Images.imageToGreyScale Testing.test_image;;
-let seg = Image_Processing.segmentation grey_test.matrix 16 687.;;
+let seg_level = Image_Processing.getOptimalThreshold_otsu grey_test.matrix 16;;
+let seg = Image_Processing.segmentation grey_test.matrix 16 seg_level;;
 let sobel_seg = Image_Processing.sobel_segmentation seg true;;
 Testing.align_matrix sobel_seg;;
 Testing.displayAnyMatrix sobel_seg;;
@@ -29,12 +31,12 @@ Testing.displayAnyMatrix norm;;
 
 (* Gabor - Contextual Filtering *)
 let grey_test = Images.imageToGreyScale Testing.test_image;;
-let gabor = Image_Processing.getGabor grey_test.matrix 16 687. true true;;
+let gabor = Image_Processing.getGabor grey_test.matrix 16 true true;;
 Testing.displayAnyMatrix gabor;;
 
 (* Binarization *)
 let grey_test = Images.imageToGreyScale Testing.test_image;;
-let gabor = Image_Processing.getGabor grey_test.matrix 16 687. true true;;
+let gabor = Image_Processing.getGabor grey_test.matrix 16 true true;;
 let bin = Image_Processing.binarization gabor 16;;
 Testing.displayBin bin;;
 
@@ -60,10 +62,10 @@ Testing.displayBin thin;;
 
 (* Thining *)
 let grey_test = Images.imageToGreyScale Testing.test_image;;
-let thin = Image_Processing.fullThining grey_test.matrix 16 687. true;;
+let thin = Image_Processing.fullThining grey_test.matrix 16 true;;
 Testing.displayBin thin;;
 
 (* Minutae - Crossing Number *)
 let grey_test = Images.imageToGreyScale Testing.test_image;;
-let thin = Image_Processing.fullThining grey_test.matrix 16 687. true;;
+let thin = Image_Processing.fullThining grey_test.matrix 16 true;;
 Minutae.display_minutae thin;;
