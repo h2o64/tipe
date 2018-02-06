@@ -22,6 +22,7 @@ module FFT = Fftw3.D;;
 
 (* Open modules *)
 #use "images.ml";;
+#use "strassen.ml"
 #use "convolution.ml";;
 #use "testing.ml";;
 #use "orientation.ml";;
