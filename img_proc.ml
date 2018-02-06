@@ -379,14 +379,15 @@ module Image_Processing =
 	let getROI m  =
 		let (h,w) = Images.getHW m in
 		let roi_size = ref 0 in
+		let s_offset = 1 in (* Sobel Kernel offset *)
 		(* Get ROI left side *)
 		let roi_left = Array.make h (-1,-1) in
-		for i = 1 to (h-2) do
-			let j = ref 1 in
-			while (m.(i).(!j) = 0.) && (!j < w-2) do
+		for i = s_offset to (h-1-s_offset) do
+			let j = ref s_offset in
+			while (m.(i).(!j) < 10. ) && (!j < w-1-s_offset) do
 				j := !j + 1;
 			done;
-			if (!j < w-2) then
+			if (!j < w-1-s_offset) then
 				(roi_left.(!roi_size)<-(i,!j+1);
 				roi_size := !roi_size + 1)
 		done;
@@ -397,8 +398,8 @@ module Image_Processing =
 		let i = ref start_x in
 		let roi_cur = ref 0 in
 		while (!i <= end_x) do
-			let j = ref (w-2) in
-			while (m.(!i).(!j) = 0.) do
+			let j = ref (w-1-s_offset) in
+			while (m.(!i).(!j) < 10.) do
 				j := !j - 1
 			done;
 			roi_right.(!roi_cur)<-(!i,!j-1);
@@ -440,6 +441,24 @@ module Image_Processing =
 			let (a,b) = roi.(r) in
 			ret.(a).(b) <- m.(a).(b)
 		done;ret;;
+
+	(* Display ROI *)
+	let displayROI roi =
+		set_color red;
+		for r = 0 to ((Array.length roi)-1) do
+			let (a,b) = roi.(r) in
+			let (x,y) = Orientation.getCircleLocation a b (size_y ()) 1 in
+			moveto x y;
+			draw_circle x y 1;
+		done;;
+
+	(* Test ROI *)
+	let testROI seg fft =
+		let sobel_seg = sobel_segmentation seg fft in
+		Testing.align_matrix sobel_seg;
+		Testing.displayAnyMatrix sobel_seg;
+		let roi = getROI sobel_seg in
+		displayROI roi;;
 
 	(* Binarization *)
 	(* Classic method of local threshold with mean, often efficient after
