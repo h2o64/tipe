@@ -1,21 +1,20 @@
 module type ORIENTATION =
-	sig
-		val pi : float
-		val pi : float
-		val hY : float Images.matrix
-		val hX : float Images.matrix
-		val getAngles : float Images.matrix -> int -> bool -> float array array
-		val getAngles_vector :
-		  float Images.matrix -> int -> 'a -> float array array
-		val smoothMyAngles : float Images.matrix -> float array array
-		val double_int_of_float : float * float -> int * int
-		val getCircleLocation : int -> int -> int -> int -> int * int
-		val getStartEndLine :
-		 int -> int -> int -> float -> (int * int) * (int * int)
-		val vector_field :
-		  (float Images.matrix -> int -> 'a -> float Images.matrix) ->
-		  Graphics.color Images.image -> int -> bool -> 'a -> unit
-	end;;
+  sig
+    val pi : float
+    val hY : float Images.matrix
+    val hX : float Images.matrix
+    val getAngles : float Images.matrix -> int -> bool -> float array array
+    val getAngles_vector :
+      float Images.matrix -> int -> 'a -> float array array
+    val smoothMyAngles : float Images.matrix -> float array array
+    val double_int_of_float : float * float -> int * int
+    val getCircleLocation : int -> int -> int -> int -> int * int
+    val getStartEndLine :
+      int -> int -> int -> float -> (int * int) * (int * int)
+    val vector_field :
+      (float Images.matrix -> int -> 'a -> float Images.matrix) ->
+      Graphics.color Images.image -> int -> bool -> 'a -> unit
+  end;;
 
 module Orientation : ORIENTATION =
   struct

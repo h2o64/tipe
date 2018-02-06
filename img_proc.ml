@@ -1,19 +1,42 @@
-(* module type IMAGE_PROCESSING =
+module type IMAGE_PROCESSING =
   sig
+    val getOptimalThreshold : float Images.matrix -> int -> float
     val segmentation :
       float Images.matrix -> int -> float -> float array array
     val normalisation : float Images.matrix -> float array array
+    val segmentation_gradient :
+      float Images.matrix -> int -> float -> bool -> float array array
     val kernelFromFunction :
       int -> (float -> float -> float) -> float array array
     val gabor_kernel : float -> float -> int -> float array array
     val gauss : float -> float -> float
-    val apply_gabor : float Images.matrix -> int -> float array array
-    val sobel_segmentation : float Images.matrix -> float array array
-    val do_everything : float Images.matrix -> int -> float -> bool -> unit
+    val apply_gabor : float Images.matrix -> int -> bool -> float array array
+    val sobel_segmentation : float Images.matrix -> bool -> float array array
+    val remove_with_mask :
+      'a Images.matrix -> 'a Images.matrix -> 'a -> 'a array array
+    val getROI : float Images.matrix -> (int * int) array
+    val keepROI :
+      float Images.matrix -> (int * int) array -> float array array
+    val keepROI_bin :
+      int Images.matrix -> (int * int) array -> int array array
+    val displayROI : (int * int) array -> unit
+    val testROI : float Images.matrix -> bool -> unit
+    val binarization : float Images.matrix -> int -> int array array
+    val getGabor :
+      float Images.matrix ->
+      int -> float -> bool -> bool -> float array array
+    val reverseBin : int Images.matrix -> int array array
+    val p : 'a array array -> int -> int -> int -> 'a
+    val bin2bool : int -> bool
+    val bool2bin : bool -> int
+    val img_mvt : int Images.matrix -> int array array -> unit
+    val one_thining : int Images.matrix -> int -> bool
+    val thinning : int Images.matrix -> int array array
+    val fullThining :
+      float Images.matrix -> int -> float -> bool -> int array array
   end;;
 
-module Image_Processing : IMAGE_PROCESSING = *)
-module Image_Processing =
+module Image_Processing : IMAGE_PROCESSING =
   struct
 
 		(* Get optimal Otsu's threshold *)

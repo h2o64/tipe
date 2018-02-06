@@ -1,19 +1,40 @@
-(* module type CONVOLUTION =
+module type CONVOLUTION =
   sig
-		val gaussian_kernel : float Images.matrix
-		val gaussian_special_kernel : float Images.matrix
-		val sharpen_kernel : float Images.matrix
-		val edge1_kernel : float Images.matrix
-		val edge2_kernel : float Images.matrix
-		val edge3_kernel : float Images.matrix
-		val unsharp_masking_kernel : float Images.matrix
-		val convolve : int -> int -> float Images.matrix -> float Images.matrix -> float
-		val convolve_matrix : float Images.matrix -> float Images.matrix -> float Images.matrix
-		val applyFilter : float Images.matrix -> float Images.matrix -> float Images.matrix
+    val gaussian_kernel : float Images.matrix
+    val gaussian_special_kernel : float Images.matrix
+    val sharpen_kernel : float Images.matrix
+    val edge1_kernel : float Images.matrix
+    val edge2_kernel : float Images.matrix
+    val edge3_kernel : float Images.matrix
+    val unsharp_masking_kernel : float Images.matrix
+    val convolve :
+      int -> int -> float array array -> float Images.matrix -> float
+    val convolve_matrix :
+      float array array -> float Images.matrix -> float array array
+    val matrix_multiply :
+      (Complex.t, 'a, 'b) Bigarray.Array2.t ->
+      (Complex.t, 'c, 'd) Bigarray.Array2.t ->
+      (Complex.t, FFT.complex_elt, Bigarray.c_layout) Bigarray.Array2.t
+    val padImg :
+      (Complex.t, 'a, 'b) Bigarray.Array2.t ->
+      int ->
+      int ->
+      (Complex.t, FFT.complex_elt, Bigarray.c_layout) Bigarray.Array2.t
+    val convolve_matrix_fft_ba :
+      float Images.matrix ->
+      (Complex.t, 'a, 'b) Bigarray.Array2.t ->
+      (Complex.t, FFT.complex_elt, Bigarray.c_layout) Bigarray.Array2.t
+    val ba_to_matrix :
+      (Complex.t, FFT.complex_elt, Bigarray.c_layout) Bigarray.Array2.t ->
+      float array array
+    val convolve_matrix_fft :
+      float Images.matrix -> float Images.matrix -> float array array
+    val applyFilter :
+      float Images.matrix -> float Images.matrix -> float array array
   end;;
 
-module Convolution : CONVOLUTION = *)
-module Convolution =
+module Convolution : CONVOLUTION =
+
   struct
 		(* Image Convolution - Kernel Collection *)
 		let (gaussian_kernel : float Images.matrix) = [| (* Size = 5 *)

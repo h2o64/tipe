@@ -1,10 +1,16 @@
-(* module type MINUTAE =
+module type MINUTAE =
   sig
-
+    type cn_pix = { x : int; y : int; typ : int; }
+    type minutae = { x : int; y : int; teta : float; }
+    val cells : (int * int) array
+    val cn_local : int array array -> int -> int -> cn_pix
+    val cn_global : int Images.matrix -> cn_pix array array
+    val draw_minutae : int -> int -> int -> int -> Graphics.color -> unit
+    val display_minutae : int Images.matrix -> unit
+    val getMinutaeMatrix : int Images.matrix -> bool -> minutae array array
   end;;
 
-module Minutae : MINUTAE = *)
-module Minutae =
+module Minutae : MINUTAE =
   struct
 
 		(* 0 = not a minutia

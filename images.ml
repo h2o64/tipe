@@ -33,7 +33,7 @@ module type IMAGES =
     val applyFunctMatrix : 'a matrix -> ('a -> 'b) -> 'b array array
     val applyFunctMatrix_d :
       'a matrix -> 'b matrix -> ('a -> 'b -> 'c) -> 'c array array
-    val copyMatrix : 'a array array -> 'a array array
+    val copyMatrix : 'a matrix -> 'a array array
     val areThereNonZeros_aux : int array array -> int -> bool -> bool
     val areThereNonZeros : int array array -> bool
     val absDiff : int matrix -> int matrix -> int array array

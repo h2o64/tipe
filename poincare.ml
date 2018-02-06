@@ -5,12 +5,13 @@ module type POINCARE =
     val getAngleBetween : float -> float -> float
     val getAngleBetween_bis : float -> float -> float
     val cells : (int * int) array
-    val array_of_matrix : float array array -> float array
+    val array_of_matrix : float Images.matrix -> float array
     val allowance : int -> float
-    val sumAngles : int -> int -> float array array -> int -> sp
+    val sumAngles : int -> int -> float Images.matrix -> int -> sp
     val poincare_index :
-      float Images.matrix -> int -> int -> 'a -> sp array array
-    val display_sp : Graphics.color Images.image -> int -> int -> 'a -> unit
+      float Images.matrix -> int -> int -> 'a -> bool -> sp array array
+    val display_sp :
+      Graphics.color Images.image -> int -> int -> 'a -> bool -> unit
   end;;
 
 module Poincare : POINCARE =

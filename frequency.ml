@@ -1,19 +1,19 @@
-(* module type FREQUENCY =
+module type FREQUENCY =
   sig
     val signature :
       int ->
       int -> float Images.matrix -> float array array -> int -> int -> float
     val get_signatures :
-      int -> int -> float Images.matrix -> int -> float array
+      int -> int -> float Images.matrix -> int -> 'a -> float array
     val createMatrixOfArray : int -> int -> int -> 'a -> 'a array array array
     val get_signature_map :
-      float Images.matrix -> int -> float array array array
+      float Images.matrix -> int -> 'a -> float array array array
     val average_pics_d : 'a array -> float
-    val frequency_map : float Images.matrix -> int -> float array array
+    val frequency_map : float Images.matrix -> int -> 'a -> float array array
+    val frequency_map_hos : float Images.matrix -> int -> float array array
   end;;
 
-module Frequency : FREQUENCY = *)
-module Frequency =
+module Frequency : FREQUENCY =
   struct
 
 		(* Get the signature of the windows (bloc_size,2*bloc_size) centered at (i,j) *)
@@ -151,7 +151,7 @@ module Frequency =
 					let p_arr = complex_array sign_map.(i).(j) in
 					let f_arr = complex_array (Array.map (fun x->alpha*.x) sign_map.(i).(j)) in
 					let f2_arr = complex_array (Array.map (fun x->2.*.x) sign_map.(i).(j)) in
-					let f3_arr = complex_array (Array.map (fun x->3.*.x) sign_map.(i).(j)) in *)
+					let f3_arr = complex_array (Array.map (fun x->3.*.x) sign_map.(i).(j)) in
 					(* Execute DFTs - TODO: Optimize with howmany arguments *)
 					let p_t = getPowerSpectrum (get_ft p_arr) in
 					let f_t = getSpectrumMagn (get_ft f_arr) in
@@ -159,7 +159,7 @@ module Frequency =
 					let f3_t = getSpectrumMagn (get_ft f3_arr) in
 					let coef = min (f_t) (max f2_t f3_t) in
 					let m_f = arr_mul p_t coef in
-					ret.(i).(j) <- getFundamental p_t; (* Get fundamental freq of the power spect *)
+					ret.(i).(j) <- getFundamental m_f; (* Get fundamental freq of the power spect *)
 				done;
 			done;ret;;
 	end
