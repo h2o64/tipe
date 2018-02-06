@@ -62,10 +62,10 @@ module Poincare : POINCARE =
 			ret;;
 
 		(* Get all the singularity points *)
-		let poincare_index matrix bloc_size tolerance angle_method =
+		let poincare_index matrix bloc_size tolerance angle_method fft =
 			let (h,w) = Images.getHW matrix in
 			let blocs =
-				Images.makeBlocList (Orientation.smoothMyAngles (Orientation.getAngles matrix bloc_size)) 3 in
+				Images.makeBlocList (Orientation.smoothMyAngles (Orientation.getAngles matrix bloc_size fft)) 3 in
 			let ret = Array.make_matrix h w {x = 0 ; y = 0 ; typ = 3} in
 			for i = 0 to ((Array.length blocs) - 1) do
 				let (x,y) = (blocs.(i).x,blocs.(i).y) in
@@ -74,9 +74,9 @@ module Poincare : POINCARE =
 			ret;;
 
 		(* Display singularity points *)
-		let display_sp image bloc_size tolerance angle_method =
+		let display_sp image bloc_size tolerance angle_method fft =
 			let grey_im = Images.imageToGreyScale image in
-			let sps = poincare_index grey_im.matrix bloc_size tolerance angle_method in
+			let sps = poincare_index grey_im.matrix bloc_size tolerance angle_method fft in
 			open_graph (Images.getFormat image.width image.height);
 			set_line_width 4;
 			draw_image (make_image image.matrix) 0 0;

@@ -186,14 +186,18 @@ module Image_Processing =
 		ret;;
 
 		(* Morphology and gradient based method of segmentation *)
-		let segmentation_gradient m bloc_size threshold =
+		let segmentation_gradient m bloc_size threshold fft =
 			let ret = Images.copyMatrix m in
 			(* let m_normalised = normalisation m in *)
 			let blocked_m = Images.cutInBlocs m bloc_size in
 			let (h,w) = Images.getHW blocked_m in
 			(* Get Gradient *)
-			let gx = Convolution.convolve_matrix Orientation.hX m in
-			let gy = Convolution.convolve_matrix Orientation.hY m in
+			let gx =
+				if fft then Convolution.convolve_matrix_fft Orientation.hX m
+				else Convolution.convolve_matrix Orientation.hX m in
+			let gy =
+				if fft then Convolution.convolve_matrix_fft Orientation.hY m
+				else Convolution.convolve_matrix Orientation.hY m in
 			let getGrad x y i j =  (i*bloc_size+x,j*bloc_size+y) in
 			for i = 0 to (h-2) do
 				for j = 0 to (w-2) do
@@ -274,32 +278,64 @@ module Image_Processing =
 		((1.) /. (2.*.Poincare.pi*.(sigma**2.)))*.exp((-1.)*.((x**2.)+.(y**2.))/.(2. *. (sigma**2.)));;
 
 	(* Apply gabor kernel *)
-	let apply_gabor m bloc_size =
+	let apply_gabor m bloc_size fft =
 		let (h,w) = Images.getHW m in
 		let ret = Array.make_matrix h w 0. in
-		let angles = Orientation.smoothMyAngles (Orientation.getAngles m bloc_size) in
-		let freqs = Frequency.frequency_map m bloc_size in
+		let angles = Orientation.smoothMyAngles (Orientation.getAngles m bloc_size fft) in
+		let freqs =
+			(* FFT HOS is WIP *)
+			if false then (Frequency.frequency_map_hos m bloc_size)
+			else (Frequency.frequency_map m bloc_size fft) in
 		let (h_b,w_b) = Images.getHW angles in
 		let gauss_kernel = kernelFromFunction 2 gauss in
-		let new_freqs = Convolution.convolve_matrix gauss_kernel freqs in
+		let new_freqs =
+				if fft then Convolution.convolve_matrix_fft gauss_kernel freqs
+				else Convolution.convolve_matrix_fft gauss_kernel freqs in
 		for i = 0 to (h_b-1) do
 			for j = 0 to (w_b-1) do
 				let kernel = gabor_kernel angles.(i).(j) new_freqs.(i).(j) bloc_size in
-				for k = 0 to (bloc_size-1) do
-					for l = 0 to (bloc_size-1) do
-						let (x,y) = ((i*bloc_size+k),(j*bloc_size+l)) in
-						if (x < h) && (y < w) then
-							ret.(x).(y) <- (Convolution.convolve x y kernel m);
+				if fft then
+					begin
+					let tocv = Array.make_matrix bloc_size bloc_size 0. in
+					(* Make the bloc to convolve *)
+					for k = 0 to (bloc_size-1) do
+						for l = 0 to (bloc_size-1) do
+							let (x,y) = ((i*bloc_size+k),(j*bloc_size+l)) in
+							if (x < h) && (y < w) then
+								tocv.(k).(l) <- ret.(x).(y);
+						done;
 					done;
-				done;
+					(* Convolve matrix *)
+					let cv_m = Convolution.convolve_matrix_fft kernel tocv in ();
+					(* Copy convolved in ret *)
+					for k = 0 to (bloc_size-1) do
+						for l = 0 to (bloc_size-1) do
+							let (x,y) = ((i*bloc_size+k),(j*bloc_size+l)) in
+							if (x < h) && (y < w) then
+								ret.(x).(y) <- cv_m.(k).(l);
+						done;
+					done;
+					end
+				else
+					(for k = 0 to (bloc_size-1) do
+						for l = 0 to (bloc_size-1) do
+							let (x,y) = ((i*bloc_size+k),(j*bloc_size+l)) in
+							if (x < h) && (y < w) then
+								ret.(x).(y) <- (Convolution.convolve x y kernel m);
+						done;
+					done);
 			done;
 		done;
 		ret;;
 
 	(* Sobel segmentation *)
-	let sobel_segmentation m =
-		let x_cv = Convolution.convolve_matrix Orientation.hX m in
-		let y_cv = Convolution.convolve_matrix Orientation.hY m in
+	let sobel_segmentation m fft =
+		let x_cv = 
+			if fft then Convolution.convolve_matrix_fft Orientation.hX m
+			else Convolution.convolve_matrix Orientation.hX m in
+		let y_cv =
+			if fft then Convolution.convolve_matrix_fft Orientation.hY m
+			else Convolution.convolve_matrix Orientation.hY m in
 		let f x y = x**2. +. y**2. in
 		Images.applyFunctMatrix_d x_cv y_cv f;;
 
@@ -422,17 +458,15 @@ module Image_Processing =
 	(* fingerprint2.jpg : bloc_size = 8 | seg_level = 4100
 		 fingerprint1.jpg : bloc_size = 16 | seg_level = 4100
 		 ppf1.png : bloc_size = 12 | seg_level = 400 *)
-	let getGabor matrix bloc_size seg_level norm useROI =
+	let getGabor matrix bloc_size seg_level useROI fft =
 		(* Classic segmentation *)
-		let seg = ref (segmentation matrix bloc_size seg_level) in
+		let seg = segmentation matrix bloc_size seg_level in
 		(* Sobel-ed Matrix *)
-		let sobel_seg = sobel_segmentation !seg in
+		let sobel_seg = sobel_segmentation seg fft in
 		(* Get ROI *)
 		let roi = getROI sobel_seg in
-		(* Normalisation *)
-		if norm then seg := (normalisation !seg);
 		(* Gabor filters *)
-		let gabor = apply_gabor !seg bloc_size in
+		let gabor = apply_gabor seg bloc_size fft in
 		Testing.align_matrix gabor;
 		(* Isolate ROI *)
 		let ret = ref gabor in
@@ -548,23 +582,19 @@ module Image_Processing =
 	(* fingerprint2.jpg : bloc_size = 8 | seg_level = 4100
 		 fingerprint1.jpg : bloc_size = 16 | seg_level = 4100
 		 ppf1.png : bloc_size = 12 | seg_level = 400 *)
-	let fullThining matrix bloc_size seg_level norm =
+	let fullThining matrix bloc_size seg_level fft =
 		(* Classic segmentation *)
 		print_string "\nSegmentation ...";
-		let seg = ref (segmentation matrix bloc_size seg_level) in
+		let seg = segmentation matrix bloc_size seg_level in
 		(* Sobel-ed Matrix *)
 		print_string "\nSobel Segmentation ...";
-		let sobel_seg = sobel_segmentation !seg in
+		let sobel_seg = sobel_segmentation seg fft in
 		(* Get ROI *)
 		print_string "\nGet ROI ...";
 		let roi = getROI sobel_seg in
-		(* Normalisation *)
-		if norm then
-			(print_string "\nNormalisation ...";
-			seg := (normalisation !seg));
 		(* Gabor filters *)
 		print_string "\nApply Gabor filters ...";
-		let gabor = apply_gabor !seg bloc_size in
+		let gabor = apply_gabor seg bloc_size fft in
 		Testing.align_matrix gabor;
 		(* Isolate ROI *)
 		print_string "\nExtract ROI ...";

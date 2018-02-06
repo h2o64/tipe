@@ -34,8 +34,8 @@ module Frequency =
 			(!x/.w);;
 
 		(* Get the signature *)
-		let get_signatures i j m bloc_size =
-			let angles = Orientation.smoothMyAngles (Orientation.getAngles_vector m bloc_size) in
+		let get_signatures i j m bloc_size fft =
+			let angles = Orientation.smoothMyAngles (Orientation.getAngles_vector m bloc_size fft) in
 			let signature_k k = signature i j m angles bloc_size k in
 			let signatures = Array.make (bloc_size*2) (signature_k 0) in
 			for l = 0 to (bloc_size*2)-1 do
@@ -54,11 +54,11 @@ module Frequency =
 			done;!ret;;
 
 		(* Get signature map *)
-		let get_signature_map m bloc_size =
+		let get_signature_map m bloc_size fft =
 			let (h,w) = Images.getHW m in
 			let (h_new,w_new) = (h-1/bloc_size,w-1/bloc_size) in
 			let ret = createMatrixOfArray h_new w_new (bloc_size*2) 0. in
-			let angles = Orientation.smoothMyAngles (Orientation.getAngles_vector m bloc_size) in
+			let angles = Orientation.smoothMyAngles (Orientation.getAngles_vector m bloc_size fft) in
 			let i = ref 0 in
 			while !i < h do
 				let j = ref 0 in
@@ -94,8 +94,8 @@ module Frequency =
 			!ret;;
 
 		(* Get frequency map *)
-		let frequency_map m bloc_size =
-			let sign_map = get_signature_map m bloc_size in
+		let frequency_map m bloc_size fft =
+			let sign_map = get_signature_map m bloc_size fft in
 			let (h,w) = Images.getHW sign_map in
 			let ret = Array.make_matrix h w 0. in
 			for i = 0 to (h-1) do

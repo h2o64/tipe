@@ -68,9 +68,9 @@ module Minutae =
 			done;;
 
 		(* Get minutae matrix *)
-		let getMinutaeMatrix matrix =
+		let getMinutaeMatrix matrix fft =
 			let cn_matrix = cn_global matrix in
-			let orientation =	(Orientation.getAngles (Images.applyFunctMatrix matrix float_of_int) 1) in
+			let orientation =	(Orientation.getAngles (Images.applyFunctMatrix matrix float_of_int) 1 fft) in
 			let cnToMinutae_local (cn : cn_pix) = {x = cn.x ; y = cn.y ; teta = orientation.(cn.x).(cn.y)} in
 			(Images.applyFunctMatrix cn_matrix cnToMinutae_local);;
 			

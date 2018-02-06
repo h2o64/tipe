@@ -1,14 +1,15 @@
 (* Vector Field - Smooth *)
-Orientation.vector_field Orientation.getAngles Testing.test_image 16 true;;
-Orientation.vector_field Orientation.getAngles_vector Testing.test_image 16 true;;
+Orientation.vector_field Orientation.getAngles Testing.test_image 16 true true;;
+Orientation.vector_field Orientation.getAngles_vector Testing.test_image 16 true true;;
 
 (* Vector Field *)
-Orientation.vector_field Orientation.getAngles Testing.test_image 16 false;;
-Orientation.vector_field Orientation.getAngles_vector Testing.test_image 16 false;;
+Orientation.vector_field Orientation.getAngles Testing.test_image 16 false true;;
+Orientation.vector_field Orientation.getAngles_vector Testing.test_image 16 false true;;
 
 (* Poincare *)
-Poincare.display_sp Testing.test_image 16 48 Poincare.getAngleBetween;;
-Poincare.display_sp Testing.test_image 16 48 Poincare.getAngleBetween_bis;;
+Poincare.display_sp Testing.test_image 16 48 Poincare.getAngleBetween true;;
+Poincare.display_sp Testing.test_image 16 48 Poincare.getAngleBetween_bis true;;
+
 
 (* Frequency *)
 let grey_test = Images.imageToGreyScale Testing.test_image;;
@@ -22,9 +23,9 @@ Testing.displayAnyMatrix seg;;
 
 (* Sobel segmentation *)
 let grey_test = Images.imageToGreyScale Testing.test_image;;
-let seg = Image_Processing.segmentation grey_test.matrix 12 400.;;
-let sobel_seg = Image_Processing.sobel_segmentation seg;;
-Testing.align_matrix sobel_seg;
+let seg = Image_Processing.segmentation grey_test.matrix 16 687.;;
+let sobel_seg = Image_Processing.sobel_segmentation seg true;;
+Testing.align_matrix sobel_seg;;
 Testing.displayAnyMatrix sobel_seg;;
 
 (* Normalisation *)

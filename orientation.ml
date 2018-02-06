@@ -1,17 +1,20 @@
 module type ORIENTATION =
 	sig
 		val pi : float
+		val pi : float
 		val hY : float Images.matrix
 		val hX : float Images.matrix
-		val getAngles : float Images.matrix -> int -> float Images.matrix
-		val getAngles_vector : float array array -> int -> float Images.matrix
-		val smoothMyAngles : float array array -> float array array
+		val getAngles : float Images.matrix -> int -> bool -> float array array
+		val getAngles_vector :
+		  float Images.matrix -> int -> 'a -> float array array
+		val smoothMyAngles : float Images.matrix -> float array array
 		val double_int_of_float : float * float -> int * int
 		val getCircleLocation : int -> int -> int -> int -> int * int
-		val getStartEndLine : int -> int -> int -> float -> (int * int) * (int * int)
-		val vector_field : (float Images.matrix -> int -> float Images.matrix) ->
-		  Graphics.color Images.image -> int -> bool -> unit
-
+		val getStartEndLine :
+		 int -> int -> int -> float -> (int * int) * (int * int)
+		val vector_field :
+		  (float Images.matrix -> int -> 'a -> float Images.matrix) ->
+		  Graphics.color Images.image -> int -> bool -> 'a -> unit
 	end;;
 
 module Orientation : ORIENTATION =
@@ -26,10 +29,13 @@ module Orientation : ORIENTATION =
 		let (hY : float Images.matrix) = [|[|-1.;0.;1.|];[|-2.;0.;2.|];[|-1.;0.;1.|]|];;
 		let (hX : float Images.matrix) = [|[|-1.;-2.;-1.|];[|0.;0.;0.|];[|1.;2.;1.|]|];;
 		(* Based of Kass and Witkin (1987) researches *)
-		let getAngles m bloc_size =
+		let getAngles m bloc_size fft =
 			let (h,w) = Images.getHW m in
 			let (h_new,w_new) = (h-1/bloc_size,w-1/bloc_size) in
 			let ret = Array.make_matrix h_new w_new 0. in
+			(* FFT *)
+			let mX = if fft then (Convolution.convolve_matrix_fft hX m) else [|[||];[||]|] in
+			let mY = if fft then (Convolution.convolve_matrix_fft hY m) else [|[||];[||]|] in
 			let i = ref 1 in
 			while !i < h do
 				let j = ref 1 in
@@ -38,8 +44,8 @@ module Orientation : ORIENTATION =
 					let dem = ref 0. in
 					for k = !i to (min (!i+bloc_size) (h-1)) do
 						for l = !j to (min (!j+bloc_size) (w-1)) do
-							let tmp_x = Convolution.convolve k l hX m in
-							let tmp_y = Convolution.convolve k l hY m in
+							let tmp_x = if fft then mX.(k).(l) else Convolution.convolve k l hX m in
+							let tmp_y = if fft then mY.(k).(l) else Convolution.convolve k l hY m in
 							(num := !num +. (2. *. tmp_x *. tmp_y);
 							dem := !dem +. (tmp_x**2. -. tmp_y**2.));
 						done;
@@ -52,7 +58,7 @@ module Orientation : ORIENTATION =
 			done;ret;;
 
 		(* Based on Donahue and Rokhlin researches *)
-		let getAngles_vector m bloc_size =
+		let getAngles_vector m bloc_size fft =
 			let (h,w) = Images.getHW m in
 			let (h_new,w_new) = (h-1/bloc_size,w-1/bloc_size) in
 			let ret = Array.make_matrix h_new w_new 0. in
@@ -94,8 +100,8 @@ module Orientation : ORIENTATION =
 			let sin_b x = sin (2. *. x) in
 			let cos_m = Images.applyFunctMatrix m cos_b in
 			let sin_m = Images.applyFunctMatrix m sin_b in
-			let cos_g = Convolution.convolve_matrix Convolution.gaussian_kernel cos_m in
-			let sin_g = Convolution.convolve_matrix Convolution.gaussian_kernel sin_m in
+			let cos_g = Convolution.convolve_matrix_fft Convolution.gaussian_kernel cos_m in
+			let sin_g = Convolution.convolve_matrix_fft Convolution.gaussian_kernel sin_m in
 			for i = 0 to (h-1) do
 				for j = 0 to (w-1) do
 					cos_g.(i).(j) <- (atan2 sin_g.(i).(j) cos_g.(i).(j)) /. 2.
@@ -126,9 +132,9 @@ module Orientation : ORIENTATION =
 				((double_int_of_float a),(double_int_of_float b));;
 
 		(* Display vector field *)
-		let vector_field methode img bloc_size smooth =
+		let vector_field methode img bloc_size smooth fft =
 			let grey_im = Images.imageToGreyScale img in
-			let angles = ref (methode grey_im.matrix (bloc_size/4)) in
+			let angles = ref (methode grey_im.matrix (bloc_size/4) fft) in
 			if smooth then angles := (smoothMyAngles !angles);
 			open_graph (Images.getFormat img.width img.height);
 			set_line_width 2;
