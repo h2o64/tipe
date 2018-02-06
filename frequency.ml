@@ -110,19 +110,56 @@ module Frequency =
 			done;ret;;
 
 		(* Higher Order Spectrum Method *)
-		open Complex;;
 		let frequency_map_hos m bloc_size =
-			let sign_map = get_signature_map m bloc_size in
+			let sign_map = get_signature_map m bloc_size true in
 			let (h,w) = Images.getHW sign_map in
 			let ret = Array.make_matrix h w 0. in
 			let alpha = 1.2 in
+			let get_ft arr =
+				let input = FFT.Array1.of_array FFT.complex Bigarray.c_layout arr in
+		    let output = FFT.Array1.create FFT.complex Bigarray.c_layout ((bloc_size)*2) in
+		    let dft = FFT.Array1.dft FFT.Forward input output in
+		    FFT.exec dft;
+				output in
+			let getSpectrumMagn sign_t =
+				(* Get magnitude of fourrier transform *)
+				let magn = Array.make (bloc_size*2) 0. in
+				for k = 0 to (bloc_size*2)-1 do
+					magn.(k) <- Complex.norm sign_t.{k};
+				done; magn in
+			let getPowerSpectrum sign_t =
+				(* Get spectrum from a fourrier transform *)
+				let magn = getSpectrumMagn sign_t in
+				(Array.map (fun x -> x**2.) magn) in
+			let arr_mul a b =
+				(* Multiply two arrays *)
+				let ret = Array.make (Array.length a) 0. in
+				for i = 0 to (Array.length a)-1 do
+					ret.(i) <- a.(i) *. b.(i);
+				done; ret in
+			let getFundamental arr =
+				let cur_m = ref arr.(1) in
+				let cur_m_ind = ref 0 in
+				for i = 2 to ((Array.length arr)-1) do
+					if arr.(i) > !cur_m then
+						(cur_m := arr.(i);
+						cur_m_ind := (i-1));
+				done; (float_of_int !cur_m_ind) in
+			let complex_array t = Array.map (fun x -> ({ re = x; im = 0.0 } : Complex.t)) t in
 			for i = 0 to (h-1) do
 				for j = 0 to (w-1) do
-				(* (* Get Fourrier transform of the bloc's signature *)
-				let complex_signature = FFT.complex_array_of_array sign_map.(i).(j) in
-				let fft_signature_complex = FFT.fft complex_signature in
-				let fft_signature = Array.map norm fft_signature_complex in *)
-				();
+					let p_arr = complex_array sign_map.(i).(j) in
+					let f_arr = complex_array (Array.map (fun x->alpha*.x) sign_map.(i).(j)) in
+					let f2_arr = complex_array (Array.map (fun x->2.*.x) sign_map.(i).(j)) in
+					let f3_arr = complex_array (Array.map (fun x->3.*.x) sign_map.(i).(j)) in *)
+					(* Execute DFTs - TODO: Optimize with howmany arguments *)
+					let p_t = getPowerSpectrum (get_ft p_arr) in
+					let f_t = getSpectrumMagn (get_ft f_arr) in
+					let f2_t = getSpectrumMagn (get_ft f2_arr) in
+					let f3_t = getSpectrumMagn (get_ft f3_arr) in
+					let coef = min (f_t) (max f2_t f3_t) in
+					let m_f = arr_mul p_t coef in
+					ret.(i).(j) <- getFundamental p_t; (* Get fundamental freq of the power spect *)
 				done;
 			done;ret;;
 	end

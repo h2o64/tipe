@@ -10,12 +10,6 @@ Orientation.vector_field Orientation.getAngles_vector Testing.test_image 16 fals
 Poincare.display_sp Testing.test_image 16 48 Poincare.getAngleBetween true;;
 Poincare.display_sp Testing.test_image 16 48 Poincare.getAngleBetween_bis true;;
 
-
-(* Frequency *)
-let grey_test = Images.imageToGreyScale Testing.test_image;;
-Frequency.plot_signature 200 200 grey_test.matrix 16;;
-Frequency.interactive_signature Testing.test_image 16;;
-
 (* Segmentation - fingerprint2 *)
 let grey_test = Images.imageToGreyScale Testing.test_image;;
 let seg = Image_Processing.segmentation grey_test.matrix 16 687.;;
