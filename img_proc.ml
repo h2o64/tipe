@@ -49,32 +49,33 @@ module Image_Processing =
 				done;
 			done;
 			(* Get f(i,j) frequency of a couple *)
-			let frequency_m = Array.make_matrix 255 255 0 in
+			let frequency_m = Array.make_matrix 255 255 0. in
 			for k = 0 to (h-1) do
 				for l = 0 to (w-1) do
 					let i = int_of_float bloc_m_val.(k).(l) in
 					let j = int_of_float bloc_m_avgrad.(k).(l) in
-					frequency_m.(i).(j) <- (frequency_m.(i).(j) + 1);
+					frequency_m.(i).(j) <- (frequency_m.(i).(j) +. 1.);
 				done;
 			done;
 			(* Calculate integral images *)
-			let sN = Array.make_matrix 255 255 0 in
-			let sO = Array.make_matrix 255 255 0 in
-			let sG = Array.make_matrix 255 255 0 in
-			let iiN = Array.make_matrix 255 255 0 in
-			let iiO = Array.make_matrix 255 255 0 in
-			let iiG = Array.make_matrix 255 255 0 in
+			let sN = Array.make_matrix 255 255 0. in
+			let sO = Array.make_matrix 255 255 0. in
+			let sG = Array.make_matrix 255 255 0. in
+			let iiN = Array.make_matrix 255 255 0. in
+			let iiO = Array.make_matrix 255 255 0. in
+			let iiG = Array.make_matrix 255 255 0. in
 			let trace = ref (-1.) in
 			(* Do the calculation of sum areas *)
 			for x = 0 to 254 do
 				for y = 0 to 254 do
 					let cur_freq = frequency_m.(x).(y) in
-					sN.(x).(y) <- if (x = 0) || (y = 0) then 0
-												else  cur_freq + sN.(x-1).(y) + sN.(x-1).(y-1) + sN.(x-1).(y-1);
-					sO.(x).(y) <- if (x = 0) || (y = 0) then 0
-											else x * (cur_freq + sO.(x-1).(y) + sO.(x-1).(y-1) + sO.(x-1).(y-1));
-					sG.(x).(y) <- if (x = 0) || (y = 0) then 0
-											else y * (cur_freq + sG.(x-1).(y) + sG.(x-1).(y-1) + sG.(x-1).(y-1));
+					let (i,j) = (float_of_int x,float_of_int y) in
+					sN.(x).(y) <- if (x = 0) || (y = 0) then 0.
+												else  cur_freq +. sN.(x-1).(y) +. sN.(x-1).(y-1) +. sN.(x-1).(y-1);
+					sO.(x).(y) <- if (x = 0) || (y = 0) then 0.
+											else i *. (cur_freq +. sO.(x-1).(y) +. sO.(x-1).(y-1) +. sO.(x-1).(y-1));
+					sG.(x).(y) <- if (x = 0) || (y = 0) then 0.
+											else j *. (cur_freq +. sG.(x-1).(y) +. sG.(x-1).(y-1) +. sG.(x-1).(y-1));
 				done;
 			done;
 			(* Get sum area in rectangles *)
@@ -85,21 +86,21 @@ module Image_Processing =
 						iiO.(x).(y) <- sO.(x).(y);
 						iiG.(x).(y) <- sG.(x).(y))
 					else if (x = 0) then
-						(iiN.(x).(y) <- sN.(x).(y) - sN.(x).(y-1);
-						iiO.(x).(y) <- sO.(x).(y) - sO.(x).(y-1);
-						iiG.(x).(y) <- sG.(x).(y) - sG.(x).(y-1))
+						(iiN.(x).(y) <- sN.(x).(y) -. sN.(x).(y-1);
+						iiO.(x).(y) <- sO.(x).(y) -. sO.(x).(y-1);
+						iiG.(x).(y) <- sG.(x).(y) -. sG.(x).(y-1))
 					else if (y = 0) then
-						(iiN.(x).(y) <- sN.(x).(y) - sN.(x-1).(y);
-						iiO.(x).(y) <- sO.(x).(y) - sO.(x-1).(y);
-						iiG.(x).(y) <- sG.(x).(y) - sG.(x-1).(y))
+						(iiN.(x).(y) <- sN.(x).(y) -. sN.(x-1).(y);
+						iiO.(x).(y) <- sO.(x).(y) -. sO.(x-1).(y);
+						iiG.(x).(y) <- sG.(x).(y) -. sG.(x-1).(y))
 					else
-						(iiN.(x).(y) <- sN.(x-1).(y-1) + sN.(x).(y) - sN.(x-1).(y) - sN.(x).(y-1);
-						iiO.(x).(y) <- sO.(x-1).(y-1) + sO.(x).(y) - sO.(x-1).(y) - sO.(x).(y-1);
-						iiG.(x).(y) <- sG.(x-1).(y-1) + sG.(x).(y) - sG.(x-1).(y) - sG.(x).(y-1));
+						(iiN.(x).(y) <- sN.(x-1).(y-1) +. sN.(x).(y) -. sN.(x-1).(y) -. sN.(x).(y-1);
+						iiO.(x).(y) <- sO.(x-1).(y-1) +. sO.(x).(y) -. sO.(x-1).(y) -. sO.(x).(y-1);
+						iiG.(x).(y) <- sG.(x-1).(y-1) +. sG.(x).(y) -. sG.(x-1).(y) -. sG.(x).(y-1));
 				done;
 			done;
 			let f s t ii_in =
-				ii_in.(s-1).(t-1) + ii_in.(254).(0) - ii_in.(254).(t-1) - ii_in.(s-1).(0) in
+				ii_in.(s-1).(t-1) +. ii_in.(254).(0) -. ii_in.(254).(t-1) -. ii_in.(s-1).(0) in
 			let size = float_of_int (h*w) in
 			for x = 0 to 254 do
 				for y = 0 to 254 do
