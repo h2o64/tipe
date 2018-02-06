@@ -67,5 +67,3 @@ Testing.displayBin thin;;
 let grey_test = Images.imageToGreyScale Testing.test_image;;
 let thin = Image_Processing.fullThining grey_test.matrix 16 687. true;;
 Minutae.display_minutae thin;;
-
-/!\ Use Otso's threshold method

@@ -58,30 +58,53 @@ module Image_Processing =
 				done;
 			done;
 			(* Calculate integral images *)
-			let iiN = Array.make_matrix 255 255 0. in
-			let iiO = Array.make_matrix 255 255 0. in
-			let iiG = Array.make_matrix 255 255 0. in
+			let sN = Array.make_matrix 255 255 0 in
+			let sO = Array.make_matrix 255 255 0 in
+			let sG = Array.make_matrix 255 255 0 in
+			let iiN = Array.make_matrix 255 255 0 in
+			let iiO = Array.make_matrix 255 255 0 in
+			let iiG = Array.make_matrix 255 255 0 in
 			let trace = ref (-1.) in
-			let sum_matrix x y mode =
-				let ret = ref 0 in
-				for i = 0 to x do
-					for j = 0 to y do
-						if mode = 1 then ret := !ret + frequency_m.(i).(j) (* Mode N *)
-						else if mode = 2 then ret := !ret + i * frequency_m.(i).(j) (* Mode O *)
-						else ret := !ret + j * frequency_m.(i).(j); (* Mode G *)
-					done;
-				done;!ret in
+			(* Do the calculation of sum areas *)
+			for x = 0 to 254 do
+				for y = 0 to 254 do
+					let cur_freq = frequency_m.(x).(y) in
+					sN.(x).(y) <- if (x = 0) || (y = 0) then 0
+												else  cur_freq + sN.(x-1).(y) + sN.(x-1).(y-1) + sN.(x-1).(y-1);
+					sO.(x).(y) <- if (x = 0) || (y = 0) then 0
+											else x * (cur_freq + sO.(x-1).(y) + sO.(x-1).(y-1) + sO.(x-1).(y-1));
+					sG.(x).(y) <- if (x = 0) || (y = 0) then 0
+											else y * (cur_freq + sG.(x-1).(y) + sG.(x-1).(y-1) + sG.(x-1).(y-1));
+				done;
+			done;
+			(* Get sum area in rectangles *)
+			for x = 0 to 254 do
+				for y = 0 to 254 do
+					if (x = 0) && (y = 0) then
+						(iiN.(x).(y) <- sN.(x).(y);
+						iiO.(x).(y) <- sO.(x).(y);
+						iiG.(x).(y) <- sG.(x).(y))
+					else if (x = 0) then
+						(iiN.(x).(y) <- sN.(x).(y) - sN.(x).(y-1);
+						iiO.(x).(y) <- sO.(x).(y) - sO.(x).(y-1);
+						iiG.(x).(y) <- sG.(x).(y) - sG.(x).(y-1))
+					else if (y = 0) then
+						(iiN.(x).(y) <- sN.(x).(y) - sN.(x-1).(y);
+						iiO.(x).(y) <- sO.(x).(y) - sO.(x-1).(y);
+						iiG.(x).(y) <- sG.(x).(y) - sG.(x-1).(y))
+					else
+						(iiN.(x).(y) <- sN.(x-1).(y-1) + sN.(x).(y) - sN.(x-1).(y) - sN.(x).(y-1);
+						iiO.(x).(y) <- sO.(x-1).(y-1) + sO.(x).(y) - sO.(x-1).(y) - sO.(x).(y-1);
+						iiG.(x).(y) <- sG.(x-1).(y-1) + sG.(x).(y) - sG.(x-1).(y) - sG.(x).(y-1));
+				done;
+			done;
 			let f s t ii_in =
-				ii_in.(s-1).(t-1) +. ii_in.(254).(0) -. ii_in.(254).(t-1) -. ii_in.(s-1).(0) in
+				ii_in.(s-1).(t-1) + ii_in.(254).(0) - ii_in.(254).(t-1) - ii_in.(s-1).(0) in
 			let size = float_of_int (h*w) in
 			for x = 0 to 254 do
 				for y = 0 to 254 do
 					(* DEBUG *)
-					Testing.loopCounter x y 254 254;
-					(* Image Integrales *)
-					iiN.(x).(y) <- float_of_int (sum_matrix x y 1);
-					iiO.(x).(y) <- float_of_int (sum_matrix x y 2);
-					iiG.(x).(y) <- float_of_int (sum_matrix x y 3);
+					(* Testing.loopCounter x y 254 254; *)
 					(* Vectors *)
 					let (u00,u01) = ((iiO.(x).(y) /. iiN.(x).(y)),(iiG.(x).(y) /. iiN.(x).(y))) in
 					let (u10,u11) = (((f (x+1) (y+1) iiO) /. (f (x+1) (y+1) iiN)),
