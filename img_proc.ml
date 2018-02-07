@@ -22,7 +22,7 @@ module type IMAGE_PROCESSING =
     val displayROI : (int * int) array -> unit
     val testROI : float Images.matrix -> bool -> unit
     val binarization : float Images.matrix -> int -> int array array
-    val getGabor : float Images.matrix -> int -> bool -> float array array
+    val getGabor : float Images.matrix -> int -> float array array
     val reverseBin : int Images.matrix -> int array array
     val p : 'a array array -> int -> int -> int -> 'a
     val bin2bool : int -> bool
@@ -498,22 +498,22 @@ module Image_Processing : IMAGE_PROCESSING =
 	(* fingerprint2.jpg : bloc_size = 8
 		 fingerprint1.jpg : bloc_size = 16
 		 ppf1.png : bloc_size = 12 *)
-	let getGabor matrix bloc_size useROI =
+	let getGabor matrix bloc_size =
 		(* Get optimal threshold *)
 		let seg_level = getOptimalThreshold_otsu matrix bloc_size in
 		(* Classic segmentation *)
 		let seg = segmentation matrix bloc_size seg_level in
 		(* Sobel-ed Matrix *)
 		let sobel_seg = sobel_segmentation seg true in (* Force FFT *)
+		Testing.align_matrix sobel_seg;
 		(* Get ROI *)
 		let roi = getROI sobel_seg in
 		(* Gabor filters *)
 		let gabor = apply_gabor seg bloc_size in
 		Testing.align_matrix gabor;
 		(* Isolate ROI *)
-		let ret = ref gabor in
-		if useROI then ret := keepROI gabor roi;
-		!ret;;
+		let ret = keepROI gabor roi in
+		ret;;
 
 	(* Reverse binary image *)
 	let reverseBin m =
@@ -634,6 +634,7 @@ module Image_Processing : IMAGE_PROCESSING =
 		(* Sobel-ed Matrix *)
 		print_string "\nSobel Segmentation ...";
 		let sobel_seg = sobel_segmentation seg  true in (* Force FFT *)
+		Testing.align_matrix sobel_seg;
 		(* Get ROI *)
 		print_string "\nGet ROI ...";
 		let roi = getROI sobel_seg in

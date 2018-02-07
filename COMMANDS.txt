@@ -1,14 +1,14 @@
 (* Vector Field - Smooth *)
 Orientation.vector_field Orientation.getAngles Testing.test_image 16 true true;;
-Orientation.vector_field Orientation.getAngles_vector Testing.test_image 16 true true;;
+Orientation.vector_field Orientation.getAngles_vector Testing.test_image 16 true;;
 
 (* Vector Field *)
-Orientation.vector_field Orientation.getAngles Testing.test_image 16 false true;;
-Orientation.vector_field Orientation.getAngles_vector Testing.test_image 16 false true;;
+Orientation.vector_field Orientation.getAngles Testing.test_image 16 false;;
+Orientation.vector_field Orientation.getAngles_vector Testing.test_image 16 false;;
 
 (* Poincare *)
-Poincare.display_sp Testing.test_image 16 48 Poincare.getAngleBetween true;;
-Poincare.display_sp Testing.test_image 16 48 Poincare.getAngleBetween_bis true;;
+Poincare.display_sp Testing.test_image 16 48 Poincare.getAngleBetween;;
+Poincare.display_sp Testing.test_image 16 48 Poincare.getAngleBetween_bis;;
 
 (* Segmentation - fingerprint2 *)
 let grey_test = Images.imageToGreyScale Testing.test_image;;
@@ -31,12 +31,12 @@ Testing.displayAnyMatrix norm;;
 
 (* Gabor - Contextual Filtering *)
 let grey_test = Images.imageToGreyScale Testing.test_image;;
-let gabor = Image_Processing.getGabor grey_test.matrix 16 true true;;
+let gabor = Image_Processing.getGabor grey_test.matrix 16;;
 Testing.displayAnyMatrix gabor;;
 
 (* Binarization *)
 let grey_test = Images.imageToGreyScale Testing.test_image;;
-let gabor = Image_Processing.getGabor grey_test.matrix 16 true true;;
+let gabor = Image_Processing.getGabor grey_test.matrix 16;;
 let bin = Image_Processing.binarization gabor 16;;
 Testing.displayBin bin;;
 
@@ -62,10 +62,10 @@ Testing.displayBin thin;;
 
 (* Thining *)
 let grey_test = Images.imageToGreyScale Testing.test_image;;
-let thin = Image_Processing.fullThining grey_test.matrix 16 true;;
+let thin = Image_Processing.fullThining grey_test.matrix 16;;
 Testing.displayBin thin;;
 
 (* Minutae - Crossing Number *)
 let grey_test = Images.imageToGreyScale Testing.test_image;;
-let thin = Image_Processing.fullThining grey_test.matrix 16 true;;
+let thin = Image_Processing.fullThining grey_test.matrix 16;;
 Minutae.display_minutae thin;;
