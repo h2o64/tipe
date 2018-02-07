@@ -1,7 +1,7 @@
 module type MINUTAE =
   sig
-    type cn_pix = { x : int; y : int; typ : int; }
-    type minutae = { x : int; y : int; teta : float; }
+    type cn_pix = { typ : int; }
+    type minutae = { teta : float; }
     val cells : (int * int) array
     val cn_local : int array array -> int -> int -> cn_pix
     val cn_global : int Images.matrix -> cn_pix array array
@@ -18,9 +18,9 @@ module Minutae : MINUTAE =
 			 2 = intermediate ridge point
 			 3 = bifurcation
 			 4 = unknown *)
-		type cn_pix = { x : int ; y : int ; typ : int };;
+		type cn_pix = { typ : int };;
 		(* x | y | orientation *)
-		type minutae = {x : int ; y : int ; teta : float };;
+		type minutae = {teta : float };;
 
 		(* All paired pixels in 3x3 *)
 		let cells = [|(-1, -1);(-1, 0);(-1, 1);(0, 1);(1, 1);(1, 0);(1, -1);(0, -1)|];;
@@ -34,12 +34,12 @@ module Minutae : MINUTAE =
 				let (c,d) = cells.(k-1) in
 				crossings := !crossings + abs (m.(i+a).(j+b) - m.(i+c).(j+d))
 			done;
-			{x = i ; y = j ; typ = !crossings / 2};;
+			{typ = !crossings / 2};;
 
 		(* Execute crossing number on whole matrix *)
 		let cn_global matrix =
 			let (h,w) = Images.getHW matrix in
-			let ret = Array.make_matrix h w {x = -1 ; y = -1 ; typ = 0} in
+			let ret = Array.make_matrix h w {typ = 0} in
 			for i = 1 to (h-2) do
 				for j = 1 to (w-2) do
 					if (matrix.(i).(j) = 1) then ret.(i).(j)<-(cn_local matrix i j);
@@ -75,12 +75,16 @@ module Minutae : MINUTAE =
 
 		(* Get minutae matrix *)
 		let getMinutaeMatrix matrix =
+			let (h,w) = Images.getHW matrix in
 			let cn_matrix = cn_global matrix in
 			let orientation =
 				(Orientation.getAngles (Images.applyFunctMatrix matrix float_of_int) 1) in
-			let cnToMinutae_local (cn : cn_pix) =
-				{x = cn.x ; y = cn.y ; teta = orientation.(cn.x).(cn.y)} in
-			(Images.applyFunctMatrix cn_matrix cnToMinutae_local);;
-			
-			
+			let minutae_ret = Array.make_matrix h w {teta = 10. } in (* 10. isn't an angle value *)
+			for i = 0 to (h-1) do
+				for j = 0 to (w-1) do
+					if not (cn_matrix.(i).(j).typ = 0) then
+						minutae_ret.(i).(j) <- {teta = orientation.(i).(j)};
+				done;
+			done;minutae_ret;;
+
 	end
