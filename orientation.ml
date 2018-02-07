@@ -3,17 +3,16 @@ module type ORIENTATION =
     val pi : float
     val hY : float Images.matrix
     val hX : float Images.matrix
-    val getAngles : float Images.matrix -> int -> bool -> float array array
-    val getAngles_vector :
-      float Images.matrix -> int -> 'a -> float array array
+    val getAngles : float Images.matrix -> int -> float array array
+    val getAngles_vector : float Images.matrix -> int -> float array array
     val smoothMyAngles : float Images.matrix -> float array array
     val double_int_of_float : float * float -> int * int
     val getCircleLocation : int -> int -> int -> int -> int * int
     val getStartEndLine :
       int -> int -> int -> float -> (int * int) * (int * int)
     val vector_field :
-      (float Images.matrix -> int -> 'a -> float Images.matrix) ->
-      Graphics.color Images.image -> int -> bool -> 'a -> unit
+      (float Images.matrix -> int -> float Images.matrix) ->
+      Graphics.color Images.image -> int -> bool -> unit
   end;;
 
 module Orientation : ORIENTATION =
@@ -28,7 +27,8 @@ module Orientation : ORIENTATION =
 		let (hY : float Images.matrix) = [|[|-1.;0.;1.|];[|-2.;0.;2.|];[|-1.;0.;1.|]|];;
 		let (hX : float Images.matrix) = [|[|-1.;-2.;-1.|];[|0.;0.;0.|];[|1.;2.;1.|]|];;
 		(* Based of Kass and Witkin (1987) researches *)
-		let getAngles m bloc_size fft =
+		let getAngles m bloc_size =
+			let fft = true in
 			let (h,w) = Images.getHW m in
 			let (h_new,w_new) = (h-1/bloc_size,w-1/bloc_size) in
 			let ret = Array.make_matrix h_new w_new 0. in
@@ -57,7 +57,7 @@ module Orientation : ORIENTATION =
 			done;ret;;
 
 		(* Based on Donahue and Rokhlin researches *)
-		let getAngles_vector m bloc_size fft =
+		let getAngles_vector m bloc_size =
 			let (h,w) = Images.getHW m in
 			let (h_new,w_new) = (h-1/bloc_size,w-1/bloc_size) in
 			let ret = Array.make_matrix h_new w_new 0. in
@@ -99,6 +99,7 @@ module Orientation : ORIENTATION =
 			let sin_b x = sin (2. *. x) in
 			let cos_m = Images.applyFunctMatrix m cos_b in
 			let sin_m = Images.applyFunctMatrix m sin_b in
+			(* Force FFT Convolution *)
 			let cos_g = Convolution.convolve_matrix_fft Convolution.gaussian_kernel cos_m in
 			let sin_g = Convolution.convolve_matrix_fft Convolution.gaussian_kernel sin_m in
 			for i = 0 to (h-1) do
@@ -131,9 +132,9 @@ module Orientation : ORIENTATION =
 				((double_int_of_float a),(double_int_of_float b));;
 
 		(* Display vector field *)
-		let vector_field methode img bloc_size smooth fft =
+		let vector_field methode img bloc_size smooth =
 			let grey_im = Images.imageToGreyScale img in
-			let angles = ref (methode grey_im.matrix (bloc_size/4) fft) in
+			let angles = ref (methode grey_im.matrix (bloc_size/4)) in
 			if smooth then angles := (smoothMyAngles !angles);
 			open_graph (Images.getFormat img.width img.height);
 			set_line_width 2;

@@ -4,12 +4,12 @@ module type FREQUENCY =
       int ->
       int -> float Images.matrix -> float array array -> int -> int -> float
     val get_signatures :
-      int -> int -> float Images.matrix -> int -> 'a -> float array
+      int -> int -> float Images.matrix -> int -> float array
     val createMatrixOfArray : int -> int -> int -> 'a -> 'a array array array
     val get_signature_map :
-      float Images.matrix -> int -> 'a -> float array array array
+      float Images.matrix -> int -> float array array array
     val average_pics_d : 'a array -> float
-    val frequency_map : float Images.matrix -> int -> 'a -> float array array
+    val frequency_map : float Images.matrix -> int -> float array array
     val frequency_map_hos : float Images.matrix -> int -> float array array
   end;;
 
@@ -34,8 +34,8 @@ module Frequency : FREQUENCY =
 			(!x/.w);;
 
 		(* Get the signature *)
-		let get_signatures i j m bloc_size fft =
-			let angles = Orientation.smoothMyAngles (Orientation.getAngles_vector m bloc_size fft) in
+		let get_signatures i j m bloc_size =
+			let angles = Orientation.smoothMyAngles (Orientation.getAngles_vector m bloc_size) in
 			let signature_k k = signature i j m angles bloc_size k in
 			let signatures = Array.make (bloc_size*2) (signature_k 0) in
 			for l = 0 to (bloc_size*2)-1 do
@@ -54,11 +54,11 @@ module Frequency : FREQUENCY =
 			done;!ret;;
 
 		(* Get signature map *)
-		let get_signature_map m bloc_size fft =
+		let get_signature_map m bloc_size =
 			let (h,w) = Images.getHW m in
 			let (h_new,w_new) = (h-1/bloc_size,w-1/bloc_size) in
 			let ret = createMatrixOfArray h_new w_new (bloc_size*2) 0. in
-			let angles = Orientation.smoothMyAngles (Orientation.getAngles_vector m bloc_size fft) in
+			let angles = Orientation.smoothMyAngles (Orientation.getAngles_vector m bloc_size) in
 			let i = ref 0 in
 			while !i < h do
 				let j = ref 0 in
@@ -94,8 +94,8 @@ module Frequency : FREQUENCY =
 			!ret;;
 
 		(* Get frequency map *)
-		let frequency_map m bloc_size fft =
-			let sign_map = get_signature_map m bloc_size fft in
+		let frequency_map m bloc_size =
+			let sign_map = get_signature_map m bloc_size in
 			let (h,w) = Images.getHW sign_map in
 			let ret = Array.make_matrix h w 0. in
 			for i = 0 to (h-1) do
@@ -111,15 +111,15 @@ module Frequency : FREQUENCY =
 
 		(* Higher Order Spectrum Method *)
 		let frequency_map_hos m bloc_size =
-			let sign_map = get_signature_map m bloc_size true in
+			let sign_map = get_signature_map m bloc_size in
 			let (h,w) = Images.getHW sign_map in
 			let ret = Array.make_matrix h w 0. in
 			let alpha = 1.2 in
 			let get_ft arr =
 				let input = FFT.Array1.of_array FFT.complex Bigarray.c_layout arr in
-		    let output = FFT.Array1.create FFT.complex Bigarray.c_layout ((bloc_size)*2) in
-		    let dft = FFT.Array1.dft FFT.Forward input output in
-		    FFT.exec dft;
+			let output = FFT.Array1.create FFT.complex Bigarray.c_layout ((bloc_size)*2) in
+			let dft = FFT.Array1.dft FFT.Forward input output in
+			FFT.exec dft;
 				output in
 			let getSpectrumMagn sign_t =
 				(* Get magnitude of fourrier transform *)

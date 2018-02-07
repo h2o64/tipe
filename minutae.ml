@@ -7,7 +7,7 @@ module type MINUTAE =
     val cn_global : int Images.matrix -> cn_pix array array
     val draw_minutae : int -> int -> int -> int -> Graphics.color -> unit
     val display_minutae : int Images.matrix -> unit
-    val getMinutaeMatrix : int Images.matrix -> bool -> minutae array array
+    val getMinutaeMatrix : int Images.matrix -> minutae array array
   end;;
 
 module Minutae : MINUTAE =
@@ -74,10 +74,12 @@ module Minutae : MINUTAE =
 			done;;
 
 		(* Get minutae matrix *)
-		let getMinutaeMatrix matrix fft =
+		let getMinutaeMatrix matrix =
 			let cn_matrix = cn_global matrix in
-			let orientation =	(Orientation.getAngles (Images.applyFunctMatrix matrix float_of_int) 1 fft) in
-			let cnToMinutae_local (cn : cn_pix) = {x = cn.x ; y = cn.y ; teta = orientation.(cn.x).(cn.y)} in
+			let orientation =
+				(Orientation.getAngles (Images.applyFunctMatrix matrix float_of_int) 1) in
+			let cnToMinutae_local (cn : cn_pix) =
+				{x = cn.x ; y = cn.y ; teta = orientation.(cn.x).(cn.y)} in
 			(Images.applyFunctMatrix cn_matrix cnToMinutae_local);;
 			
 			

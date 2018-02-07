@@ -34,8 +34,8 @@ module type CONVOLUTION =
   end;;
 
 module Convolution : CONVOLUTION =
-
   struct
+
 		(* Image Convolution - Kernel Collection *)
 		let (gaussian_kernel : float Images.matrix) = [| (* Size = 5 *)
 		[|0.012841;0.026743;0.03415;0.026743;0.012841|];
@@ -121,7 +121,7 @@ module Convolution : CONVOLUTION =
 		(* Pad an image with 0 *)
 		let padImg m n ker_size =
 			let (h,w) = (Bigarray.Array2.dim1 m,Bigarray.Array2.dim2 m) in
-      let ret = FFT.Array2.create FFT.complex Bigarray.c_layout n n in
+			let ret = FFT.Array2.create FFT.complex Bigarray.c_layout n n in
 			Bigarray.Array2.fill ret Complex.zero;
 			(* Copy image in ret *)
 			for i = ker_size to (h-1)+ker_size do
@@ -168,12 +168,12 @@ module Convolution : CONVOLUTION =
 			let (h_k,w_k) = Images.getHW kernel in
 			let n = (max h w) + h_k in
 			let input_image = padImg m n h_k in
-      let input_kernel = FFT.Array2.create FFT.complex Bigarray.c_layout n n in
-      let output_image = FFT.Array2.create FFT.complex Bigarray.c_layout n n in
-      let output_kernel = FFT.Array2.create FFT.complex Bigarray.c_layout n n in
+			let input_kernel = FFT.Array2.create FFT.complex Bigarray.c_layout n n in
+			let output_image = FFT.Array2.create FFT.complex Bigarray.c_layout n n in
+			let output_kernel = FFT.Array2.create FFT.complex Bigarray.c_layout n n in
 			(* Compute FFT for each matrix *)
-      let dft_image = FFT.Array2.dft ~meas:FFT.Estimate FFT.Forward input_image output_image in
-      let dft_kernel = FFT.Array2.dft ~meas:FFT.Estimate FFT.Forward input_kernel output_kernel in
+			let dft_image = FFT.Array2.dft ~meas:FFT.Estimate FFT.Forward input_image output_image in
+			let dft_kernel = FFT.Array2.dft ~meas:FFT.Estimate FFT.Forward input_kernel output_kernel in
 			(* Do kernel more manualy - It's small anyway *)
 			Bigarray.Array2.fill input_kernel Complex.zero;
 			for i = 0 to (h_k-1) do
@@ -186,8 +186,8 @@ module Convolution : CONVOLUTION =
 			FFT.exec dft_kernel;
 			(* Multiply and return *)
 			let mul_ret = matrix_multiply output_image output_kernel in
-      let output_ret = FFT.Array2.create FFT.complex Bigarray.c_layout n n in
-      let dft_ret = FFT.Array2.dft ~meas:FFT.Estimate FFT.Backward mul_ret output_ret in
+			let output_ret = FFT.Array2.create FFT.complex Bigarray.c_layout n n in
+			let dft_ret = FFT.Array2.dft ~meas:FFT.Estimate FFT.Backward mul_ret output_ret in
 			FFT.exec dft_ret;
 			(* Cut the party we want *)
 			let ret = FFT.Array2.create FFT.complex Bigarray.c_layout h w in
@@ -212,7 +212,8 @@ module Convolution : CONVOLUTION =
 		(* Convolve with 'a array array *)
 		let convolve_matrix_fft kernel m =
 			(* Create image bigarray *)
-      let image = Bigarray.Array2.of_array FFT.complex Bigarray.c_layout (Images.applyFunctMatrix m (fun x -> ({ re = x; im = 0.0 } : Complex.t))) in
+			let complex_image = Images.applyFunctMatrix m (fun x -> ({ re = x; im = 0.0 } : Complex.t)) in
+			let image = Bigarray.Array2.of_array FFT.complex Bigarray.c_layout complex_image in
 			let conv = convolve_matrix_fft_ba kernel image in
 			ba_to_matrix conv;;
 

@@ -1,4 +1,4 @@
-(* module type IMAGE_PROCESSING =
+module type IMAGE_PROCESSING =
   sig
     val getOptimalThreshold_otsu : float Images.matrix -> int -> float
     val segmentation :
@@ -10,7 +10,7 @@
       int -> (float -> float -> float) -> float array array
     val gabor_kernel : float -> float -> int -> float array array
     val gauss : float -> float -> float
-    val apply_gabor : float Images.matrix -> int -> bool -> float array array
+    val apply_gabor : float Images.matrix -> int -> float array array
     val sobel_segmentation : float Images.matrix -> bool -> float array array
     val remove_with_mask :
       'a Images.matrix -> 'a Images.matrix -> 'a -> 'a array array
@@ -22,9 +22,7 @@
     val displayROI : (int * int) array -> unit
     val testROI : float Images.matrix -> bool -> unit
     val binarization : float Images.matrix -> int -> int array array
-    val getGabor :
-      float Images.matrix ->
-      int -> float -> bool -> bool -> float array array
+    val getGabor : float Images.matrix -> int -> bool -> float array array
     val reverseBin : int Images.matrix -> int array array
     val p : 'a array array -> int -> int -> int -> 'a
     val bin2bool : int -> bool
@@ -32,12 +30,10 @@
     val img_mvt : int Images.matrix -> int array array -> unit
     val one_thining : int Images.matrix -> int -> bool
     val thinning : int Images.matrix -> int array array
-    val fullThining :
-      float Images.matrix -> int -> float -> bool -> int array array
+    val fullThining : float Images.matrix -> int -> int array array
   end;;
 
-module Image_Processing : IMAGE_PROCESSING = *)
-module Image_Processing =
+module Image_Processing : IMAGE_PROCESSING =
   struct
 
 	(* Get optimal Otsu's threshold *)
@@ -331,52 +327,24 @@ module Image_Processing =
 		((1.) /. (2.*.Poincare.pi*.(sigma**2.)))*.exp((-1.)*.((x**2.)+.(y**2.))/.(2. *. (sigma**2.)));;
 
 	(* Apply gabor kernel *)
-	let apply_gabor m bloc_size fft =
+	let apply_gabor m bloc_size =
 		let (h,w) = Images.getHW m in
 		let ret = Array.make_matrix h w 0. in
-		let angles = Orientation.smoothMyAngles (Orientation.getAngles m bloc_size fft) in
-		let freqs =
-			(* FFT HOS is WIP *)
-			if false then (Frequency.frequency_map_hos m bloc_size)
-			else (Frequency.frequency_map m bloc_size fft) in
+		let angles = Orientation.smoothMyAngles (Orientation.getAngles m bloc_size) in
+		let freqs = Frequency.frequency_map m bloc_size in
 		let (h_b,w_b) = Images.getHW angles in
 		let gauss_kernel = kernelFromFunction 2 gauss in
-		let new_freqs =
-				if fft then Convolution.convolve_matrix_fft gauss_kernel freqs
-				else Convolution.convolve_matrix_fft gauss_kernel freqs in
+		let new_freqs = Convolution.convolve_matrix gauss_kernel freqs in
 		for i = 0 to (h_b-1) do
 			for j = 0 to (w_b-1) do
 				let kernel = gabor_kernel angles.(i).(j) new_freqs.(i).(j) bloc_size in
-				if fft then
-					begin
-					let tocv = Array.make_matrix bloc_size bloc_size 0. in
-					(* Make the bloc to convolve *)
-					for k = 0 to (bloc_size-1) do
-						for l = 0 to (bloc_size-1) do
-							let (x,y) = ((i*bloc_size+k),(j*bloc_size+l)) in
-							if (x < h) && (y < w) then
-								tocv.(k).(l) <- ret.(x).(y);
-						done;
+				for k = 0 to (bloc_size-1) do
+					for l = 0 to (bloc_size-1) do
+						let (x,y) = ((i*bloc_size+k),(j*bloc_size+l)) in
+						if (x < h) && (y < w) then
+							ret.(x).(y) <- (Convolution.convolve x y kernel m);
 					done;
-					(* Convolve matrix *)
-					let cv_m = Convolution.convolve_matrix_fft kernel tocv in ();
-					(* Copy convolved in ret *)
-					for k = 0 to (bloc_size-1) do
-						for l = 0 to (bloc_size-1) do
-							let (x,y) = ((i*bloc_size+k),(j*bloc_size+l)) in
-							if (x < h) && (y < w) then
-								ret.(x).(y) <- cv_m.(k).(l);
-						done;
-					done;
-					end
-				else
-					(for k = 0 to (bloc_size-1) do
-						for l = 0 to (bloc_size-1) do
-							let (x,y) = ((i*bloc_size+k),(j*bloc_size+l)) in
-							if (x < h) && (y < w) then
-								ret.(x).(y) <- (Convolution.convolve x y kernel m);
-						done;
-					done);
+				done;
 			done;
 		done;
 		ret;;
@@ -527,20 +495,20 @@ module Image_Processing =
 		ret;;
 
 	(* Display gabor filtered *)
-	(* fingerprint2.jpg : bloc_size = 8 | seg_level = 4100
-		 fingerprint1.jpg : bloc_size = 16 | seg_level = 4100
-		 ppf1.png : bloc_size = 12 | seg_level = 400 *)
-	let getGabor matrix bloc_size useROI fft =
+	(* fingerprint2.jpg : bloc_size = 8
+		 fingerprint1.jpg : bloc_size = 16
+		 ppf1.png : bloc_size = 12 *)
+	let getGabor matrix bloc_size useROI =
 		(* Get optimal threshold *)
 		let seg_level = getOptimalThreshold_otsu matrix bloc_size in
 		(* Classic segmentation *)
 		let seg = segmentation matrix bloc_size seg_level in
 		(* Sobel-ed Matrix *)
-		let sobel_seg = sobel_segmentation seg fft in
+		let sobel_seg = sobel_segmentation seg true in (* Force FFT *)
 		(* Get ROI *)
 		let roi = getROI sobel_seg in
 		(* Gabor filters *)
-		let gabor = apply_gabor seg bloc_size fft in
+		let gabor = apply_gabor seg bloc_size in
 		Testing.align_matrix gabor;
 		(* Isolate ROI *)
 		let ret = ref gabor in
@@ -656,7 +624,7 @@ module Image_Processing =
 	(* fingerprint2.jpg : bloc_size = 8
 		 fingerprint1.jpg : bloc_size = 16
 		 ppf1.png : bloc_size = 12 *)
-	let fullThining matrix bloc_size fft =
+	let fullThining matrix bloc_size =
 		(* Get optimal threshold *)
 		print_string "\nGet optimal threshold ...";
 		let seg_level = getOptimalThreshold_otsu matrix bloc_size in
@@ -665,13 +633,13 @@ module Image_Processing =
 		let seg = segmentation matrix bloc_size seg_level in
 		(* Sobel-ed Matrix *)
 		print_string "\nSobel Segmentation ...";
-		let sobel_seg = sobel_segmentation seg fft in
+		let sobel_seg = sobel_segmentation seg  true in (* Force FFT *)
 		(* Get ROI *)
 		print_string "\nGet ROI ...";
 		let roi = getROI sobel_seg in
 		(* Gabor filters *)
 		print_string "\nApply Gabor filters ...";
-		let gabor = apply_gabor seg bloc_size fft in
+		let gabor = apply_gabor seg bloc_size in
 		Testing.align_matrix gabor;
 		(* Isolate ROI *)
 		print_string "\nExtract ROI ...";
