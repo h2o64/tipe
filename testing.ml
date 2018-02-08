@@ -6,6 +6,7 @@ module type TESTING =
 		val displayAnyMatrix : float Images.matrix -> unit
 		val dbg_int : string -> int -> bool -> unit
 		val dbg_float : string -> float -> bool -> unit
+		val dbg_bool : string -> bool -> bool -> unit
 		val get_array_max : 'a array -> 'a
 		val get_matrix_max : 'a array array -> 'a
 		val align_matrix : float array array -> unit
@@ -54,6 +55,14 @@ module Testing : TESTING =
 			print_string text;
 			print_string " = ";
 			print_float value;;
+
+
+		let dbg_bool text value jump =
+			if jump then print_string "\n";
+			print_string "[DBG] ";
+			print_string text;
+			print_string " = ";
+			print_bool value;;
 
 		let get_array_max tab =
 			let ret = ref tab.(0) in

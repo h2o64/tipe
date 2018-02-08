@@ -1,13 +1,13 @@
 module type MINUTAE =
   sig
     type cn_pix = { typ : int; }
-    type minutae = { teta : float; }
+    type minutae = { x : int; y : int; theta : float; }
     val cells : (int * int) array
     val cn_local : int array array -> int -> int -> cn_pix
     val cn_global : int Images.matrix -> cn_pix array array
     val draw_minutae : int -> int -> int -> int -> Graphics.color -> unit
     val display_minutae : int Images.matrix -> unit
-    val getMinutaeMatrix : int Images.matrix -> minutae array array
+    val getMinutaeList : int Images.matrix -> minutae array * int
   end;;
 
 module Minutae : MINUTAE =
@@ -20,7 +20,7 @@ module Minutae : MINUTAE =
 			 4 = unknown *)
 		type cn_pix = { typ : int };;
 		(* x | y | orientation *)
-		type minutae = {teta : float };;
+		type minutae = {x : int ; y : int ; theta : float };;
 
 		(* All paired pixels in 3x3 *)
 		let cells = [|(-1, -1);(-1, 0);(-1, 1);(0, 1);(1, 1);(1, 0);(1, -1);(0, -1)|];;
@@ -74,17 +74,19 @@ module Minutae : MINUTAE =
 			done;;
 
 		(* Get minutae matrix *)
-		let getMinutaeMatrix matrix =
+		let getMinutaeList matrix =
 			let (h,w) = Images.getHW matrix in
 			let cn_matrix = cn_global matrix in
 			let orientation =
 				(Orientation.getAngles (Images.applyFunctMatrix matrix float_of_int) 1) in
-			let minutae_ret = Array.make_matrix h w {teta = 10. } in (* 10. isn't an angle value *)
+			let cur_minutae = ref 0 in
+			let minutae_ret = Array.make (h*w) {x = -1; y = -1; theta = 10.} in (* 10. isn't an angle value *)
 			for i = 0 to (h-1) do
 				for j = 0 to (w-1) do
-					if not (cn_matrix.(i).(j).typ = 0) then
-						minutae_ret.(i).(j) <- {teta = orientation.(i).(j)};
+					if (cn_matrix.(i).(j).typ = 1) || (cn_matrix.(i).(j).typ = 3) then
+						(minutae_ret.(!cur_minutae) <- { x = i ; y = j ; theta = orientation.(i).(j)};
+						cur_minutae := !cur_minutae + 1);
 				done;
-			done;minutae_ret;;
+			done;(minutae_ret,!cur_minutae);;
 
 	end

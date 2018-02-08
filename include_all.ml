@@ -31,3 +31,4 @@ module FFT = Fftw3.D;;
 #use "frequency.ml";;
 #use "img_proc.ml";;
 #use "minutae.ml";;
+#use "hough_transform.ml";;

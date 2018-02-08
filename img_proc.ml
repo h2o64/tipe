@@ -617,7 +617,7 @@ module Image_Processing : IMAGE_PROCESSING =
 		while !isDeleting do
 			isDeleting := one_thining cur_m 0;
 			isDeleting := one_thining cur_m 1;
-			Testing.displayBin cur_m;
+			(* Testing.displayBin cur_m; *)
 		done;cur_m;;
 
 	(* Display final result *)

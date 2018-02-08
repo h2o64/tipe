@@ -221,7 +221,7 @@ module Convolution : CONVOLUTION =
 			let tmp = ref m in
 			Testing.displayAnyMatrix !tmp;
 			for i = 0 to 40 do
-				(tmp := (convolve_matrix_fft kernel !tmp);
+				(tmp := (convolve_matrix kernel !tmp);
 				Testing.align_matrix !tmp;
 				Testing.displayAnyMatrix !tmp);
 			done;; *)
