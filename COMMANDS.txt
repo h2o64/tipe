@@ -1,6 +1,6 @@
 (* Vector Field - Smooth *)
-Orientation.vector_field Orientation.getAngles Testing.test_image 16 true true;;
-Orientation.vector_field Orientation.getAngles_vector Testing.test_image 16 true;;
+Orientation.vector_field Orientation.getAngles Testing.test_image 16 true;;
+Orientation.vector_field Orientation.getAngles_vector Testing.test_image 16;;
 
 (* Vector Field *)
 Orientation.vector_field Orientation.getAngles Testing.test_image 16 false;;
