@@ -483,11 +483,21 @@ module Image_Processing : IMAGE_PROCESSING =
 						(* Get bloc mean *)
 						let mean = !sum /. bloc_size_sqrd in
 						(* Set pixel > mean to 1 *)
+						let fullBlack = ref 0 in
 						for k = !i to max_h do
 							for l = !j to max_w do
-								if m.(k).(l) > mean then ret.(k).(l) <- 1
+								if m.(k).(l) > mean then
+									(ret.(k).(l) <- 1;
+									fullBlack := !fullBlack + 1);
 							done;
-						done;);
+						done;
+						(* Undo previous work if bloc has been destroyed *)
+						if !fullBlack > (bloc_size-2)*(bloc_size-2) then
+							(for k = !i to max_h do
+								for l = !j to max_w do
+									ret.(k).(l) <- 0
+								done;
+							done;));
 					j := !j + bloc_size;
 				done;
 				i := !i + bloc_size
