@@ -1,4 +1,11 @@
-module type FREQUENCY =
+(* Open Libraries *)
+open Images;;
+open Orientation;;
+
+(* Set FFT Module *)
+module FFT = Fftw3.D;;
+
+module Frequency :
   sig
     val signature :
       int ->
@@ -11,9 +18,7 @@ module type FREQUENCY =
     val average_pics_d : 'a array -> float
     val frequency_map : float Images.matrix -> int -> float array array
     val frequency_map_hos : float Images.matrix -> int -> float array array
-  end;;
-
-module Frequency : FREQUENCY =
+  end =
   struct
 
 		(* Get the signature of the windows (bloc_size,2*bloc_size) centered at (i,j) *)

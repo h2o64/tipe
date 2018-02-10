@@ -1,4 +1,8 @@
-module type ORIENTATION =
+(* Open Libraries *)
+open Convolution;;
+open Images;;
+
+module Orientation :
   sig
     val pi : float
     val hY : float Images.matrix
@@ -13,10 +17,9 @@ module type ORIENTATION =
     val vector_field :
       (float Images.matrix -> int -> float Images.matrix) ->
       Graphics.color Images.image -> int -> bool -> unit
-  end;;
-
-module Orientation : ORIENTATION =
+  end =
   struct
+
 		(* Uses Sobel operator *)
 		(* https://en.wikipedia.org/wiki/Prewitt_operator *)
 		(* https://en.wikipedia.org/wiki/Sobel_operator *)
@@ -136,10 +139,10 @@ module Orientation : ORIENTATION =
 			let grey_im = Images.imageToGreyScale img in
 			let angles = ref (methode grey_im.matrix (bloc_size/4)) in
 			if smooth then angles := (smoothMyAngles !angles);
-			open_graph (Images.getFormat img.width img.height);
-			set_line_width 2;
-			set_color red;
-			draw_image (make_image img.matrix) 0 0;
+			Graphics.open_graph (Images.getFormat img.width img.height);
+			Graphics.set_line_width 2;
+			Graphics.set_color Graphics.red;
+			Graphics.draw_image (Graphics.make_image img.matrix) 0 0;
 			let i = ref 1 in
 			while !i < grey_im.height do
 				let j = ref 1 in
@@ -148,7 +151,7 @@ module Orientation : ORIENTATION =
 					let ((x0,y0),(x1,y1)) = (getStartEndLine !i !j (bloc_size/4) tang) in
 					let (a,b) = getCircleLocation x0 y0 grey_im.height (bloc_size/4) in
 					let (c,d) = getCircleLocation x1 y1 grey_im.height (bloc_size/4) in
-					draw_segments [|(a,b,c,d)|];
+					Graphics.draw_segments [|(a,b,c,d)|];
 					j := !j + (bloc_size/4);
 				done;
 				i := !i + (bloc_size/4);

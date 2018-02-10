@@ -1,4 +1,7 @@
-module type PLOT =
+(* Open Libraries *)
+open Frequency;;
+
+module Plot :
   sig
     val max_array : int array -> int * int
     val plot :
@@ -11,10 +14,9 @@ module type PLOT =
       int array * int * int * bool * Graphics.color * string * int * 
       bool * int * bool * bool -> unit
     val plot_mouse : int -> Graphics.color -> int -> int * int
-  end;;
-
-module Plot : PLOT =
+  end  =
   struct
+
 		(* Maximum of an int array *)
 		let max_array tab =
 			let maxi = ref (-1,-1) in
@@ -32,11 +34,11 @@ module Plot : PLOT =
 			let y_old = ref (-1) in
 			let y_factor = ref 1 in
 			(* Create the graphic window *)
-			y_old := size_y ();
+			y_old := Graphics.size_y ();
 			if doResize then
-				(x_old := size_x ();
-				if doScaleHeight then resize_window (!x_old + width*x_factor) (!y_old)
-				else resize_window (!x_old + width*x_factor) (height);)
+				(x_old := Graphics.size_x ();
+				if doScaleHeight then Graphics.resize_window (!x_old + width*x_factor) (!y_old)
+				else Graphics.resize_window (!x_old + width*x_factor) (height);)
 			else (x_old := x_offset);
 			if (height > !y_old) && doScaleHeight then y_factor := height/(!y_old);
 			(* Check if the sizes are right *)
@@ -53,21 +55,21 @@ module Plot : PLOT =
 					points.(i) <- (!x_old+a*x_factor,b/(!y_factor),!x_old+x.(i)*x_factor,y.(i)/(!y_factor));
 					prev := (x.(i),y.(i));
 			done;				
-			set_window_title title;
-			set_line_width line_width;
-			set_color color;
-			draw_segments points;
-			(if not (color = blue) then set_color blue
-			else set_color green);
+			Graphics.set_window_title title;
+			Graphics.set_line_width line_width;
+			Graphics.set_color color;
+			Graphics.draw_segments points;
+			(if not (color = Graphics.blue) then Graphics.set_color Graphics.blue
+			else Graphics.set_color Graphics.green);
 			if showHighest then
 				let text_bar = 20 in
-				let (cur_x,cur_y) = (size_x (),size_y ()) in
+				let (cur_x,cur_y) = (Graphics.size_x (),Graphics.size_y ()) in
 				let x_text = (((cur_x - !x_old)/2)-50) + !x_old in
 				let y_text = cur_y - (text_bar/2) - 10 in
-				if doResize then resize_window cur_x (cur_y + text_bar);
-				draw_segments [|x.(max_ind)*x_factor+(!x_old),0,!x_old+x.(max_ind)*x_factor,max_val|];
-				moveto x_text y_text;
-				draw_string (String.concat "" ["Ridge Frequency = ";string_of_int (x.(max_ind)+1)]);;
+				if doResize then Graphics.resize_window cur_x (cur_y + text_bar);
+				Graphics.draw_segments [|x.(max_ind)*x_factor+(!x_old),0,!x_old+x.(max_ind)*x_factor,max_val|];
+				Graphics.moveto x_text y_text;
+				Graphics.draw_string (String.concat "" ["Ridge Frequency = ";string_of_int (x.(max_ind)+1)]);;
 
 		(* float array to int array *)
 		let int_of_float_array tab = Array.map int_of_float tab;;
@@ -106,10 +108,10 @@ module Plot : PLOT =
 
 		(* Mouse tracking *)
 		let plot_mouse size color width =
-				let (i,j) = (mouse_pos ()) in
-				set_color color;
-				set_line_width width;
-				draw_circle i j (size/2);
+				let (i,j) = (Graphics.mouse_pos ()) in
+				Graphics.set_color color;
+				Graphics.set_line_width width;
+				Graphics.draw_circle i j (size/2);
 				(i,j);;
 
 	end

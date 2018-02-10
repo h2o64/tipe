@@ -1,10 +1,20 @@
-(* module type HOUGH_TRANSFORM =
+(* Open Libraries *)
+open Minutae;;
+open Poincare;;
+
+module Hough_Transform :
   sig
-
-  end;;
-
-module Hough_Transform : HOUGH_TRANSFORM = *)
-module Hough_Transform =
+    val delta :
+      Minutae.minutae array -> Minutae.minutae array -> int -> int -> float
+    val getParameters :
+      Minutae.minutae array * int ->
+      Minutae.minutae array * int -> float array * float array * float array
+    val voteParameters :
+      Minutae.minutae array * int ->
+      Minutae.minutae array * int -> float * float * float
+    val getScore :
+      Minutae.minutae array * int -> Minutae.minutae array * int -> float
+  end =
   struct
 
 		(* Define delta(i,j) *)

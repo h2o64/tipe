@@ -1,4 +1,8 @@
-module type POINCARE =
+(* Open Libraries *)
+open Images;;
+open Orientation;;
+
+module Poincare :
   sig
     val pi : float
     type sp = { mutable x : int; mutable y : int; mutable typ : int; }
@@ -11,10 +15,9 @@ module type POINCARE =
     val poincare_index :
       float Images.matrix -> int -> int -> 'a -> sp array array
     val display_sp : Graphics.color Images.image -> int -> int -> 'a -> unit
-  end;;
-
-module Poincare : POINCARE =
+  end =
   struct
+
 		let pi = 4. *. atan 1.
 		(* 0 = loop | 1 = delta | 2 = whorl | 3 = nothing *)
 		type sp = { mutable x : int ; mutable y : int ; mutable typ : int };;
@@ -77,20 +80,20 @@ module Poincare : POINCARE =
 		let display_sp image bloc_size tolerance angle_method =
 			let grey_im = Images.imageToGreyScale image in
 			let sps = poincare_index grey_im.matrix bloc_size tolerance angle_method in
-			open_graph (Images.getFormat image.width image.height);
-			set_line_width 4;
-			draw_image (make_image image.matrix) 0 0;
+			Graphics.open_graph (Images.getFormat image.width image.height);
+			Graphics.set_line_width 4;
+			Graphics.draw_image (Graphics.make_image image.matrix) 0 0;
 			let (h,w) = Images.getHW sps in
 			for i = 1 to (h-1) do
 				for j = 1 to (w-1) do
 						if sps.(i).(j).typ < 3 then
 						begin
-							if sps.(i).(j).typ = 0 then set_color red (* Loop *)
-							else if sps.(i).(j).typ = 1 then set_color green (* Delta *)
-							else if sps.(i).(j).typ = 2 then set_color blue; (* Whorl *)
+							if sps.(i).(j).typ = 0 then Graphics.set_color Graphics.red (* Loop *)
+							else if sps.(i).(j).typ = 1 then Graphics.set_color Graphics.green (* Delta *)
+							else if sps.(i).(j).typ = 2 then Graphics.set_color Graphics.blue; (* Whorl *)
 							let (x,y) = Orientation.getCircleLocation i j image.height bloc_size in
-							moveto x y;
-							draw_circle x y (bloc_size/2)
+							Graphics.moveto x y;
+							Graphics.draw_circle x y (bloc_size/2)
 						end;
 				done;
 			done;;

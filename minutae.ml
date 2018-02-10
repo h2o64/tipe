@@ -1,4 +1,9 @@
-module type MINUTAE =
+(* Open Libraries *)
+open Images;;
+open Orientation;;
+open Testing;;
+
+module Minutae :
   sig
     type cn_pix = { typ : int; }
     type minutae = { x : int; y : int; theta : float; }
@@ -8,9 +13,7 @@ module type MINUTAE =
     val draw_minutae : int -> int -> int -> int -> Graphics.color -> unit
     val display_minutae : int Images.matrix -> unit
     val getMinutaeList : int Images.matrix -> minutae array * int
-  end;;
-
-module Minutae : MINUTAE =
+  end =
   struct
 
 		(* 0 = not a minutia
@@ -50,9 +53,9 @@ module Minutae : MINUTAE =
 		(* Draw circle *)
 		let draw_minutae i j h l color =
 			let (x,y) = Orientation.getCircleLocation i j h 1 in
-			set_color color;
-			moveto x y;
-			draw_circle x y l;;
+			Graphics.set_color color;
+			Graphics.moveto x y;
+			Graphics.draw_circle x y l;;
 
 		(* Display all minutae - Use binary matrix *)
 		let display_minutae matrix =
@@ -63,13 +66,13 @@ module Minutae : MINUTAE =
 			for i = 0 to (h-1) do
 				for j = 0 to (w-1) do
 					if (cn_matrix.(i).(j).typ = 1) then
-						draw_minutae i j h 2 red; (* Ridge Ending *)
+						draw_minutae i j h 2 Graphics.red; (* Ridge Ending *)
 					if false && (cn_matrix.(i).(j).typ = 2) then
-						draw_minutae i j h 2 green; (* Intermediate Ridge point *)
+						draw_minutae i j h 2 Graphics.green; (* Intermediate Ridge point *)
 					if (cn_matrix.(i).(j).typ = 3) then
-						draw_minutae i j h 2 blue; (* Bifurcation *)
+						draw_minutae i j h 2 Graphics.blue; (* Bifurcation *)
 					if (cn_matrix.(i).(j).typ > 3) then
-						draw_minutae i j h 2 cyan; (* Unknown *)
+						draw_minutae i j h 2 Graphics.cyan; (* Unknown *)
 				done;
 			done;;
 

@@ -1,4 +1,6 @@
 *.cmi
 *.cmo
+*.cmx
 *.o
 Databases/
+out/

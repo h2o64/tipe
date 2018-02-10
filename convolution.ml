@@ -1,4 +1,10 @@
-module type CONVOLUTION =
+(* Set FFT Module *)
+module FFT = Fftw3.D;;
+
+(* Open Libraries *)
+open Images;;
+
+module Convolution :
   sig
     val gaussian_kernel : float Images.matrix
     val gaussian_special_kernel : float Images.matrix
@@ -31,9 +37,8 @@ module type CONVOLUTION =
       float Images.matrix -> float Images.matrix -> float array array
     val applyFilter :
       float Images.matrix -> float Images.matrix -> float array array
-  end;;
+  end =
 
-module Convolution : CONVOLUTION =
   struct
 
 		(* Image Convolution - Kernel Collection *)

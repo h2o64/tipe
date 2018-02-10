@@ -7,7 +7,11 @@
 	Adapted for Bigarray.Array2 by Louis Popi
 *)
 
-module type STRASSEN =
+
+(* Set FFT Module *)
+module FFT = Fftw3.D;;
+
+module Strassen :
   sig
 		val make_matrix :
 			int ->
@@ -32,10 +36,9 @@ module type STRASSEN =
 			(Complex.t, FFT.complex_elt, Bigarray.c_layout) Bigarray.Array2.t ->
 			(Complex.t, FFT.complex_elt, Bigarray.c_layout) Bigarray.Array2.t ->
 			(Complex.t, FFT.complex_elt, Bigarray.c_layout) Bigarray.Array2.t
-  end;;
-
-module Strassen : STRASSEN =
+  end =
   struct
+
 		(* A function to get a complex zero-ed NxN Bigarray *)
 		let make_matrix a b =
 			let ret = FFT.Array2.create FFT.complex Bigarray.c_layout a b in

@@ -1,4 +1,12 @@
-module type IMAGE_PROCESSING =
+(* Open Libraries *)
+open Convolution;;
+open Frequency;;
+open Images;;
+open Orientation;;
+open Poincare;;
+open Testing;;
+
+module Image_Processing :
   sig
     val getOptimalThreshold_otsu : float Images.matrix -> int -> float
     val segmentation :
@@ -31,9 +39,7 @@ module type IMAGE_PROCESSING =
     val one_thining : int Images.matrix -> int -> bool
     val thinning : int Images.matrix -> int array array
     val fullThining : float Images.matrix -> int -> int array array
-  end;;
-
-module Image_Processing : IMAGE_PROCESSING =
+  end =
   struct
 
 	(* Get optimal Otsu's threshold *)
@@ -442,12 +448,12 @@ module Image_Processing : IMAGE_PROCESSING =
 
 	(* Display ROI *)
 	let displayROI roi =
-		set_color red;
+		Graphics.set_color Graphics.red;
 		for r = 0 to ((Array.length roi)-1) do
 			let (a,b) = roi.(r) in
-			let (x,y) = Orientation.getCircleLocation a b (size_y ()) 1 in
-			moveto x y;
-			draw_circle x y 1;
+			let (x,y) = Orientation.getCircleLocation a b (Graphics.size_y ()) 1 in
+			Graphics.moveto x y;
+			Graphics.draw_circle x y 1;
 		done;;
 
 	(* Test ROI *)

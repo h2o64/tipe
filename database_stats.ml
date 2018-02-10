@@ -1,10 +1,25 @@
-(* module type DB_STATS =
+(* Open Libraries *)
+open Images;;
+open Image_magick;;
+open Img_proc;;
+open Minutae;;
+open Orientation;;
+open Poincare;;
+open Testing;;
+
+(* Set correct Image processing module *)
+module Image_Processing = Img_proc;;
+open Image_Processing;;
+
+module DB_Stats :
   sig
-
-  end;;
-
-module DB_Stats : DB_STATS = *)
-module DB_Stats =
+    val listFP : unit -> string array
+    val makeImages : string array -> Graphics.color Images.image array
+    val greyImages :
+      Graphics.color Images.image array -> float Images.image array
+    val dumpImage : int -> int -> string -> string -> unit
+    val image_results : unit -> unit
+  end =
   struct
 
 	(* Get actual files *)
@@ -35,7 +50,7 @@ module DB_Stats =
 											Char.escaped name.[s_l-5];
 											"-";
 											suffix;".jpg"] in
-		sauver_image img_color bak_path;;
+		Image_magick.sauver_image img_color bak_path;;
 
 	(* Output orientation images *)
 	let image_results () =

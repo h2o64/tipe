@@ -1,0 +1,34 @@
+convolution.cmo : images.cmo
+convolution.cmx : images.cmx
+database_stats.cmo : testing.cmo poincare.cmo orientation.cmo minutae.cmo \
+    img_proc.cmo images.cmo image_magick.cmo
+database_stats.cmx : testing.cmx poincare.cmx orientation.cmx minutae.cmx \
+    img_proc.cmx images.cmx image_magick.cmx
+frequency.cmo : orientation.cmo images.cmo
+frequency.cmx : orientation.cmx images.cmx
+hough_transform.cmo : poincare.cmo minutae.cmo
+hough_transform.cmx : poincare.cmx minutae.cmx
+image_magick.cmo :
+image_magick.cmx :
+images.cmo : image_magick.cmo
+images.cmx : image_magick.cmx
+img_proc.cmo : testing.cmo poincare.cmo orientation.cmo images.cmo \
+    frequency.cmo convolution.cmo
+img_proc.cmx : testing.cmx poincare.cmx orientation.cmx images.cmx \
+    frequency.cmx convolution.cmx
+include_all.cmo :
+include_all.cmx :
+main.cmo : database_stats.cmo
+main.cmx : database_stats.cmx
+minutae.cmo : testing.cmo orientation.cmo images.cmo
+minutae.cmx : testing.cmx orientation.cmx images.cmx
+orientation.cmo : images.cmo convolution.cmo
+orientation.cmx : images.cmx convolution.cmx
+plot.cmo : frequency.cmo
+plot.cmx : frequency.cmx
+poincare.cmo : orientation.cmo images.cmo
+poincare.cmx : orientation.cmx images.cmx
+strassen.cmo :
+strassen.cmx :
+testing.cmo : images.cmo image_magick.cmo frequency.cmo convolution.cmo
+testing.cmx : images.cmx image_magick.cmx frequency.cmx convolution.cmx

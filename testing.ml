@@ -1,4 +1,10 @@
-module type TESTING =
+(* Open Libraries *)
+open Convolution;;
+open Frequency;;
+open Image_magick;;
+open Images;;
+
+module Testing :
   sig
 		val test_image : Graphics.color Images.image
 		val filter_test : Graphics.color Images.image -> float Images.matrix -> unit
@@ -14,10 +20,9 @@ module type TESTING =
     val simpleBinarize : float Images.matrix -> int array array
     val loopCounter : int -> int -> int -> int -> unit
 		val time : ('a -> 'b -> 'c) -> 'a -> 'b -> 'c
-  end;;
-
-module Testing : TESTING =
+  end =
   struct
+
 		(* Open image to analyse *)
 		let test_image = Images.import_image "Images/ppf1.png"
 
@@ -25,8 +30,8 @@ module Testing : TESTING =
 			let bw_img = Images.imageToGreyScale image in
 			let m = Convolution.applyFilter bw_img.matrix kernel in
 			let last = Images.matrixApply Images.rgb_of_greyscale m in
-			open_graph (Images.getFormat image.width image.height);
-			dessiner_image last;;
+			Graphics.open_graph (Images.getFormat image.width image.height);
+			Image_magick.dessiner_image last;;
 
 		let blockedToFull h w bloc_size matrix =
 			let ret = Array.make_matrix h w 255. in
@@ -39,8 +44,8 @@ module Testing : TESTING =
 		let displayAnyMatrix matrix =
 			let (h,w) = Images.getHW matrix in
 			let last = Images.matrixApply Images.rgb_of_greyscale matrix in
-			open_graph (Images.getFormat w h);
-			dessiner_image last;;
+			Graphics.open_graph (Images.getFormat w h);
+			Image_magick.dessiner_image last;;
 
 		let dbg_int text value jump =
 			if jump then print_string "\n";
@@ -56,13 +61,12 @@ module Testing : TESTING =
 			print_string " = ";
 			print_float value;;
 
-
 		let dbg_bool text value jump =
 			if jump then print_string "\n";
 			print_string "[DBG] ";
 			print_string text;
 			print_string " = ";
-			print_bool value;;
+			Format.print_bool value;;
 
 		let get_array_max tab =
 			let ret = ref tab.(0) in

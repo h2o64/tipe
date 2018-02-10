@@ -1,4 +1,7 @@
-module type IMAGES =
+(* Open libraries *)
+open Image_magick;;
+
+module Images :
   sig
     type 'a matrix = 'a array array
     type 'a bloc = { x : int; y : int; matrix : 'a matrix; }
@@ -37,10 +40,9 @@ module type IMAGES =
     val areThereNonZeros_aux : int array array -> int -> bool -> bool
     val areThereNonZeros : int array array -> bool
     val absDiff : int matrix -> int matrix -> int array array
-  end;;
-
-module Images : IMAGES =
+  end =
   struct
+
 		(* Structures *)
 		type 'a matrix = 'a array array;;
 		type 'a bloc = {x : int ; y : int ; matrix : 'a matrix};;
@@ -63,7 +65,7 @@ module Images : IMAGES =
 			done;(ret : 'b matrix);;
 
 		(* Import an image *)
-		let import_image file = let matrix = lire_image file in
+		let import_image file = let matrix = Image_magick.lire_image file in
 				{height = getHeight matrix; width = getWidth matrix; matrix = matrix};;
 
 		(* Matrix as image *)
