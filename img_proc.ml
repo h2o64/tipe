@@ -403,11 +403,12 @@ module Image_Processing :
 		let roi_cur = ref 0 in
 		while (!i <= end_x) do
 			let j = ref (w-1-s_offset) in
-			while (m.(!i).(!j) < 10.) do
+			while (m.(!i).(!j) < 10. ) && (!j > s_offset) do
 				j := !j - 1
 			done;
-			roi_right.(!roi_cur)<-(!i,!j-1);
-			roi_cur := !roi_cur + 1;
+			if (!j > s_offset) then
+				(roi_right.(!roi_cur)<-(!i,!j-1);
+				roi_cur := !roi_cur + 1);
 			i := !i + 1
 		done;
 		(* Merge both *)
