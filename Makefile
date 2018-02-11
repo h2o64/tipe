@@ -110,7 +110,7 @@ LIBS = \
 # or if any C code have to be linked with your program
 # (irrelevant for ocamlopt)
 
-CUSTOM = -custom
+CUSTOM = -g -custom
 
 # Default setting of the WITH* variables. Should be changed if your
 # local libraries are not found by the compiler.

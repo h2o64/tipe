@@ -24,11 +24,11 @@ minutae.cmo : testing.cmo orientation.cmo images.cmo
 minutae.cmx : testing.cmx orientation.cmx images.cmx
 orientation.cmo : images.cmo convolution.cmo
 orientation.cmx : images.cmx convolution.cmx
-plot.cmo : frequency.cmo
-plot.cmx : frequency.cmx
+plot.cmo :
+plot.cmx :
 poincare.cmo : orientation.cmo images.cmo
 poincare.cmx : orientation.cmx images.cmx
 strassen.cmo :
 strassen.cmx :
-testing.cmo : images.cmo image_magick.cmo frequency.cmo convolution.cmo
-testing.cmx : images.cmx image_magick.cmx frequency.cmx convolution.cmx
+testing.cmo : images.cmo image_magick.cmo convolution.cmo
+testing.cmx : images.cmx image_magick.cmx convolution.cmx

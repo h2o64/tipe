@@ -1,6 +1,3 @@
-(* Open Libraries *)
-open Frequency;;
-
 module Plot :
   sig
     val max_array : int array -> int * int

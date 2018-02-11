@@ -103,8 +103,13 @@ module Orientation :
 			let cos_m = Images.applyFunctMatrix m cos_b in
 			let sin_m = Images.applyFunctMatrix m sin_b in
 			(* Force FFT Convolution *)
-			let cos_g = Convolution.convolve_matrix_fft Convolution.gaussian_kernel cos_m in
-			let sin_g = Convolution.convolve_matrix_fft Convolution.gaussian_kernel sin_m in
+			let fft = true in
+			let cos_g =
+				if fft then Convolution.convolve_matrix_fft Convolution.gaussian_kernel cos_m
+				else Convolution.convolve_matrix Convolution.gaussian_kernel cos_m in
+			let sin_g =
+				if fft then Convolution.convolve_matrix_fft Convolution.gaussian_kernel sin_m
+				else Convolution.convolve_matrix Convolution.gaussian_kernel sin_m in
 			for i = 0 to (h-1) do
 				for j = 0 to (w-1) do
 					cos_g.(i).(j) <- (atan2 sin_g.(i).(j) cos_g.(i).(j)) /. 2.

@@ -1,6 +1,5 @@
 (* Open Libraries *)
 open Convolution;;
-open Frequency;;
 open Image_magick;;
 open Images;;
 
