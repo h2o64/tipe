@@ -24,7 +24,7 @@ module DB_Stats :
 	(* Get actual files *)
 	let listFP () =
 		let ic = open_in "FP_DB.txt" in
-		let files = really_input_string ic 2079 in
+		let files = really_input_string ic 8319 in
 		let files_list = String.split_on_char '\n' files in
 		Array.of_list files_list;;
 
@@ -42,6 +42,12 @@ module DB_Stats :
 		let img_color = Graphics.dump_image img in
 		let s_l = String.length name in
 		let bak_path = String.concat "" ["out/";
+											Char.escaped name.[s_l-15];
+											Char.escaped name.[s_l-14];
+											Char.escaped name.[s_l-13];
+											Char.escaped name.[s_l-12];
+											Char.escaped name.[s_l-11];
+											Char.escaped name.[s_l-10];
 											Char.escaped name.[s_l-9];
 											Char.escaped name.[s_l-8];
 											Char.escaped name.[s_l-7];
