@@ -51,6 +51,29 @@ module DB_Stats :
 											suffix;".jpg"] in
 		Image_magick.sauver_image img_color bak_path;;
 
+	(* Segmentation part *)
+	let segm_imag m bloc_size file_path =
+			let (h,w) = Images.getHW m in
+			let seg_level = Image_Processing.getOptimalThreshold_otsu m bloc_size in
+			let seg = ref (Array.make_matrix h w 255.) in
+			print_string "Segmentation ...\n";
+			seg := (Image_Processing.segmentation m bloc_size seg_level);
+			Testing.displayAnyMatrix !seg;
+			dumpImage h w file_path "segmentation";
+			(* Normalisation *)
+			if (!seg = (Array.make_matrix h w 255.)) then
+				(print_string "Normalisation ...\n";
+				let norm = Image_Processing.normalisation m in
+				dumpImage h w file_path "normalisation";
+				(* New segmentation *)
+				let seg_level_new = Image_Processing.getOptimalThreshold_otsu norm bloc_size in
+				print_string "Segmentation Normalized ...\n";
+				seg := (Image_Processing.segmentation norm bloc_size seg_level_new);
+				Testing.displayAnyMatrix !seg;
+				dumpImage h w file_path "segmentation");
+			!seg;;
+
+
 	(* Output orientation images *)
 	let image_results () =
 		(* Get images *)
@@ -60,9 +83,11 @@ module DB_Stats :
 		let n = Array.length grey_images in
 		let bloc_size = 16 in
 		(* Do the commands *)
+		Graphics.open_graph "";
 		for i = 0 to (n-1) do
 			(* Get sizes *)
 			let (h,w) = (image_list.(i).height,image_list.(i).width) in
+			Graphics.resize_window w h;
 			(* DEBUG *)
 			print_string "##### \nCurrent Image is : ";
 			print_string file_list.(i);
@@ -76,21 +101,16 @@ module DB_Stats :
 			Poincare.display_sp image_list.(i) 16 48 Poincare.getAngleBetween;
 			dumpImage h w file_list.(i) "poincare";
 			(* Segmentation *)
-			print_string "Segmentation level .. \n";
-			let seg_level = Image_Processing.getOptimalThreshold_otsu grey_images.(i).matrix bloc_size in
-			print_string "Segmentation .. \n";
-			let seg = Image_Processing.segmentation grey_images.(i).matrix bloc_size seg_level in
-			Testing.displayAnyMatrix seg;
-			dumpImage h w file_list.(i) "segmentation";
+			let seg = ref (segm_imag grey_images.(i).matrix bloc_size file_list.(i)) in
 			(* Get ROI *)
 			print_string "ROI .. \n";
-			let sobel_seg = Image_Processing.sobel_segmentation seg true in (* Enable FFT *)
+			let sobel_seg = Image_Processing.sobel_segmentation !seg true in (* Enable FFT *)
 			Testing.align_matrix sobel_seg;
 			print_string "ROI Extraction .. \n";
 			let roi = Image_Processing.getROI sobel_seg in			
 			(* Gabor *)
 			print_string "Gabor .. \n";
-			let gabor_tmp = Image_Processing.apply_gabor seg bloc_size in
+			let gabor_tmp = Image_Processing.apply_gabor !seg bloc_size in
 			Testing.align_matrix gabor_tmp;
 			let gabor = Image_Processing.keepROI gabor_tmp roi in
 			Testing.displayAnyMatrix gabor;
@@ -111,6 +131,7 @@ module DB_Stats :
 			Minutae.display_minutae thin;
 			dumpImage h w file_list.(i) "minutae";
 			print_string "DONE\n";
+			Graphics.clear_graph ();
 		done;;
 
 	end

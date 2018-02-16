@@ -39,6 +39,7 @@ module Images :
     val copyMatrix : 'a matrix -> 'a array array
     val areThereNonZeros_aux : int array array -> int -> bool -> bool
     val areThereNonZeros : int array array -> bool
+    val tooMuchWhite : float matrix -> bool
     val absDiff : int matrix -> int matrix -> int array array
   end =
   struct
@@ -220,6 +221,20 @@ module Images :
 			else if (b = true) then true
 			else (areThereNonZeros_aux m (i-1) (Array.mem 1 m.(i)));;
 		let areThereNonZeros m = areThereNonZeros_aux m ((Array.length m)-1) false;;
+
+		(* Are there withe ? *)
+		let tooMuchWhite m =
+			let (h,w) = getHW m in
+			let size = float_of_int (h*w) in
+			let white_count = ref 0 in
+			let acceptance = 65. /. 100. in
+			for i = 0 to (h-1) do
+				for j = 0 to (w-1) do
+					(* 85% of 255 *)
+					if (m.(i).(j) > 210.) then white_count := !white_count + 1;
+				done;
+			done;
+			(((float_of_int !white_count) /. size) > acceptance);;
 
 		(* Get abs difference between two matrix *)
 		let absDiff a b =

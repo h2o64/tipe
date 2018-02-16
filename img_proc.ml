@@ -75,7 +75,7 @@ module Image_Processing :
 			done;
 		done;
 		(* Get f(i,j) frequency of a couple *)
-		let frequency_m = Array.make_matrix 255 255 0. in
+		let frequency_m = Array.make_matrix 256 256 0. in
 		for k = 0 to (h-1) do
 			for l = 0 to (w-1) do
 				let i = int_of_float bloc_m_val.(k).(l) in
@@ -84,16 +84,16 @@ module Image_Processing :
 			done;
 		done;
 		(* Calculate integral images *)
-		let sN = Array.make_matrix 255 255 0. in
-		let sO = Array.make_matrix 255 255 0. in
-		let sG = Array.make_matrix 255 255 0. in
-		let iiN = Array.make_matrix 255 255 0. in
-		let iiO = Array.make_matrix 255 255 0. in
-		let iiG = Array.make_matrix 255 255 0. in
+		let sN = Array.make_matrix 256 256 0. in
+		let sO = Array.make_matrix 256 256 0. in
+		let sG = Array.make_matrix 256 256 0. in
+		let iiN = Array.make_matrix 256 256 0. in
+		let iiO = Array.make_matrix 256 256 0. in
+		let iiG = Array.make_matrix 256 256 0. in
 		let trace = ref (-1.) in
 		(* Do the calculation of sum areas *)
-		for x = 0 to 254 do
-			for y = 0 to 254 do
+		for x = 0 to 255 do
+			for y = 0 to 255 do
 				let cur_freq = frequency_m.(x).(y) in
 				let (i,j) = (float_of_int x,float_of_int y) in
 				sN.(x).(y) <- if (x = 0) && (y = 0) then cur_freq
@@ -111,8 +111,8 @@ module Image_Processing :
 			done;
 		done;
 		(* Get sum area in rectangles *)
-		for x = 0 to 254 do
-			for y = 0 to 254 do
+		for x = 0 to 255 do
+			for y = 0 to 255 do
 				if (x = 0) && (y = 0) then
 					(iiN.(x).(y) <- sN.(x).(y);
 					iiO.(x).(y) <- sO.(x).(y);
@@ -132,10 +132,10 @@ module Image_Processing :
 			done;
 		done;
 		let f s t ii_in =
-			ii_in.(s-1).(t-1) +. ii_in.(254).(0) -. ii_in.(254).(t-1) -. ii_in.(s-1).(0) in
+			ii_in.(s-1).(t-1) +. ii_in.(255).(0) -. ii_in.(255).(t-1) -. ii_in.(s-1).(0) in
 		let size = float_of_int (h*w) in
-		for x = 0 to 254 do
-			for y = 0 to 254 do
+		for x = 0 to 255 do
+			for y = 0 to 255 do
 				(* Vectors *)
 				let (u00,u01) = ((iiO.(x).(y) /. iiN.(x).(y)),(iiG.(x).(y) /. iiN.(x).(y))) in
 				let (u10,u11) = (((f (x+1) (y+1) iiO) /. (f (x+1) (y+1) iiN)),
@@ -399,17 +399,15 @@ module Image_Processing :
 		let roi_right = Array.make (!roi_size) (-1,-1) in
 		let (start_x,_) = roi_left.(0) in
 		let (end_x,_) = roi_left.(!roi_size-1) in
-		let i = ref start_x in
 		let roi_cur = ref 0 in
-		while (!i <= end_x) do
+		for i = start_x to end_x do
 			let j = ref (w-1-s_offset) in
-			while (m.(!i).(!j) < 10. ) && (!j > s_offset) do
+			while (m.(i).(!j) < 10. ) && (!j > s_offset) do
 				j := !j - 1
 			done;
-			if (!j > s_offset) then
-				(roi_right.(!roi_cur)<-(!i,!j-1);
+			if (!j > s_offset) && (!roi_cur < !roi_size) then
+				(roi_right.(!roi_cur)<-(i,!j-1);
 				roi_cur := !roi_cur + 1);
-			i := !i + 1
 		done;
 		(* Merge both *)
 		let ret_cur = ref 0 in
