@@ -7,7 +7,7 @@ open Poincare;;
 open Testing;;
 
 module Image_Processing :
-  sig
+ sig
     val getOptimalThreshold_otsu : float Images.matrix -> int -> float
     val segmentation :
       float Images.matrix -> int -> float -> float array array
@@ -34,9 +34,13 @@ module Image_Processing :
     val reverseBin : int Images.matrix -> int array array
     val p : 'a array array -> int -> int -> int -> 'a
     val img_mvt : int Images.matrix -> int array array -> unit
-    val one_thining : int Images.matrix -> int -> bool
-    val thinning : int Images.matrix -> int array array
-    val fullThining : float Images.matrix -> int -> int array array
+    val one_thining_guohall : int Images.matrix -> int -> bool
+    val one_thining_zhangsuen : int Images.matrix -> int -> bool
+    val thinning :
+      'a Images.matrix -> ('a array array -> int -> bool) -> 'a array array
+    val fullThining :
+      float Images.matrix ->
+      (int array array -> int -> bool) -> int -> int array array
   end =
   struct
 
@@ -559,7 +563,7 @@ module Image_Processing :
 		done;;
 
 	(* One thining iteration *)
-	let one_thining m iter =
+	let one_thining_guohall m iter =
 		(* Prepare matrix *)
 		let (h,w) = Images.getHW m in
 		let marker = Array.make_matrix h w 0 in
@@ -597,14 +601,53 @@ module Image_Processing :
 		deleting := Images.areThereNonZeros (Images.absDiff m m_bak);
 		!deleting;;
 
+	let one_thining_zhangsuen m iter =
+		(* Prepare matrix *)
+		let (h,w) = Images.getHW m in
+		let marker = Array.make_matrix h w 0 in
+		let m_bak = Images.copyMatrix m in
+		let deleting = ref false in
+		let bool2bin value =
+			if value then 1
+			else 0 in
+		(* Actual loop *)
+		for i = 2 to (h-2) do
+			for j = 2 to (w-2) do
+				(* Get values *)
+				let p_cur num = p m i j num in
+				let p2 = (p_cur 2) in
+				let p3 = (p_cur 3) in
+				let p4 = (p_cur 4) in
+				let p5 = (p_cur 5) in
+				let p6 = (p_cur 6) in
+				let p7 = (p_cur 7) in
+				let p8 = (p_cur 8) in
+				let p9 = (p_cur 9) in
+				(* Conditions *)
+				let a = (bool2bin ((p2 = 0) && (p3 = 1))) + (bool2bin ((p3 = 0 && (p4 = 1)))) + 
+								 (bool2bin ((p4 = 0) && (p5 = 1))) + (bool2bin ((p5 = 0 && (p6 = 1)))) + 
+								 (bool2bin ((p6 = 0) && (p7 = 1))) + (bool2bin ((p7 = 0 && (p8 = 1)))) +
+								 (bool2bin ((p8 = 0) && (p9 = 1))) + (bool2bin ((p9 = 0 && (p2 = 1)))) in
+				let b = p2 + p3 + p4 + p5 + p6 + p7 + p8 + p9 in
+				let m1 = if (iter = 0) then (p2 * p4 * p6) else (p2 * p4 * p8) in
+				let m2 = if (iter = 0) then (p4 * p6 * p8) else (p2 * p6 * p8) in
+				(* Check *)
+				if ((a = 1) && ((b >= 2) && (b <= 6)) && (m1 = 0) && (m2 = 0)) then
+					marker.(i).(j) <- 1;
+			done;
+		done;
+		img_mvt m marker;
+		deleting := Images.areThereNonZeros (Images.absDiff m m_bak);
+		!deleting;;
+
 	(* Actuall thinning part *)
-	let thinning m =
+	let thinning m methode =
 		let cur_m = Images.copyMatrix m in
 		(* Actual while - Add an iter check *)
 		let isDeleting = ref true in
 		while !isDeleting do
-			isDeleting := one_thining cur_m 0;
-			isDeleting := one_thining cur_m 1;
+			isDeleting := methode cur_m 0;
+			isDeleting := methode cur_m 1;
 			(* Testing.displayBin cur_m; *)
 		done;cur_m;;
 
@@ -612,7 +655,7 @@ module Image_Processing :
 	(* fingerprint2.jpg : bloc_size = 8
 		 fingerprint1.jpg : bloc_size = 16
 		 ppf1.png : bloc_size = 12 *)
-	let fullThining matrix bloc_size =
+	let fullThining matrix thin_method bloc_size =
 		(* Get optimal threshold *)
 		print_string "\nGet optimal threshold ...";
 		let seg_level = getOptimalThreshold_otsu matrix bloc_size in
@@ -641,7 +684,7 @@ module Image_Processing :
 		let bin_roi = keepROI_bin bin roi in
 		(* Do thinning *)
 		print_string "\nApply thinning algorithm ...";
-		let thin = thinning bin_roi in
+		let thin = thinning bin_roi thin_method in
 		thin;;
 
 	end

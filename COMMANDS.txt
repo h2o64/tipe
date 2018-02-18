@@ -62,10 +62,12 @@ Testing.displayBin thin;;
 
 (* Thining *)
 let grey_test = Images.imageToGreyScale Testing.test_image;;
-let thin = Image_Processing.fullThining grey_test.matrix 16;;
-Testing.displayBin thin;;
+let thin1 = Image_Processing.fullThining grey_test.matrix Image_Processing.one_thining_guohall 16;;
+let thin2 = Image_Processing.fullThining grey_test.matrix Image_Processing.one_thining_zhangsuen 16;;
+Testing.displayBin thin1;;
 
 (* Minutae - Crossing Number *)
 let grey_test = Images.imageToGreyScale Testing.test_image;;
-let thin = Image_Processing.fullThining grey_test.matrix 16;;
-Minutae.display_minutae thin;;
+let thin1 = Image_Processing.fullThining grey_test.matrix Image_Processing.one_thining_guohall 16;;
+let thin2 = Image_Processing.fullThining grey_test.matrix Image_Processing.one_thining_zhangsuen 16;;
+Minutae.display_minutae thin1;;
