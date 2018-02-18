@@ -33,8 +33,6 @@ module Image_Processing :
     val getGabor : float Images.matrix -> int -> float array array
     val reverseBin : int Images.matrix -> int array array
     val p : 'a array array -> int -> int -> int -> 'a
-    val bin2bool : int -> bool
-    val bool2bin : bool -> int
     val img_mvt : int Images.matrix -> int array array -> unit
     val one_thining : int Images.matrix -> int -> bool
     val thinning : int Images.matrix -> int array array
@@ -548,14 +546,7 @@ module Image_Processing :
 		else if num = 4 then matrix.(i).(j+1)
 		else if num = 3 then matrix.(i-1).(j+1)
 		else if num = 2 then matrix.(i-1).(j)
-		else if num = 1 then matrix.(i).(j)
 		else matrix.(i).(j) (* Fallback *) ;;
-
-	(* Work with a boolean matrix *)
-	let bin2bool value = (value = 1);;
-	let bool2bin value =
-		if value then 1
-		else 0;;
 
 	(* Image difference *)
 	(* A &= ~B in CCP *)
@@ -563,9 +554,7 @@ module Image_Processing :
 		let (h,w) = Images.getHW a in
 		for i = 0 to (h-1) do
 			for j = 0 to (w-1) do
-				let a_b = bin2bool a.(i).(j) in
-				let b_b = bin2bool b.(i).(j) in
-				a.(i).(j) <- bool2bin (a_b && (not b_b));
+				a.(i).(j) <- ((land) a.(i).(j) (lnot b.(i).(j)));
 			done;
 		done;;
 
@@ -575,53 +564,37 @@ module Image_Processing :
 		let (h,w) = Images.getHW m in
 		let marker = Array.make_matrix h w 0 in
 		let m_bak = Images.copyMatrix m in
-		let m_b = Images.applyFunctMatrix m bin2bool in
 		let deleting = ref false in
-		(* C(P1)   = !P2 & (P3 | P4) + !P4 & (P5 | P6) + !P6 & (P7 | P8) + !P8 & (P9 | P2) *)
-		let c matrix i j =
-			let p_cur = p matrix i j in
-			let a = ((not (p_cur 2)) && ((p_cur 3) || p_cur 4)) in
-			let b = ((not (p_cur 4)) && ((p_cur 5) || p_cur 6)) in
-			let c = ((not (p_cur 6)) && ((p_cur 7) || p_cur 8)) in
-			let d = ((not (p_cur 8)) && ((p_cur 9) || p_cur 2)) in
-			((bool2bin a) + (bool2bin b) + (bool2bin c) + (bool2bin d)) in
-		(* N1(P1) = (P9 | P2) + (P3 | P4) + (P5 | P6) + (P7 | P8) *)
-		let n1 matrix i j =
-			let p_cur = p matrix i j in
-			bool2bin (p_cur 9 || p_cur 2) +
-			bool2bin (p_cur 3 || p_cur 4) +
-			bool2bin (p_cur 5 || p_cur 6) +
-			bool2bin (p_cur 7 || p_cur 8) in
-		(* N2(P1) = (P2 | P3) + (P4 | P5) + (P6 | P7) + (P8 | P9) *)
-		let n2 matrix i j =
-			let p_cur = p matrix i j in
-			bool2bin (p_cur 2 || p_cur 3) +
-			bool2bin (p_cur 4 || p_cur 5) +
-			bool2bin (p_cur 6 || p_cur 7) +
-			bool2bin (p_cur 8 || p_cur 9) in
-		(* N(P1)   = MIN[N1(P1), N2(P1)] *)
-		let n matrix i j = min (n1 matrix i j) (n2 matrix i j) in
-		(* M(P1) =
-				* if iter = 0 : ((P6 | P7 | !P9) & P8)
-				* if iter = 1 : ((P2 | P3 | !P5) & P4) *)
-		let m_f matrix i j =
-			let p_cur = p matrix i j in
-			if (iter = 1) then
-				(((p_cur 2) || (p_cur 3) || (not (p_cur 5))) && (p_cur 4))
-			else
-				(((p_cur 6) || (p_cur 7) || (not (p_cur 9))) && (p_cur 8)); in
 		(* Actual loop *)
 		for i = 2 to (h-2) do
 			for j = 2 to (w-2) do
-				let cond1 = ((c m_b i j) = 1) in
-				let cond2 = (2 <= (n m_b i j)) && ((n m_b i j) <= 3) in
-				let cond3 = ((m_f m_b i j) = false) in
-				if (cond1 && cond2 && cond3) then
+				(* Get values *)
+				let p_cur num = p m i j num in
+				let p2 = (p_cur 2) in
+				let p3 = (p_cur 3) in
+				let p4 = (p_cur 4) in
+				let p5 = (p_cur 5) in
+				let p6 = (p_cur 6) in
+				let p7 = (p_cur 7) in
+				let p8 = (p_cur 8) in
+				let p9 = (p_cur 9) in
+				(* Conditions *)
+				let c  = ((land) (lnot p2) ((lor) p3 p4)) + ((land) (lnot p4) ((lor) p5 p6)) +
+								 ((land) (lnot p6) ((lor) p7 p8)) + ((land) (lnot p8) ((lor) p9 p2)) in
+				let n1 = ((lor) p9 p2) + ((lor) p3 p4) + ((lor) p5 p6) + ((lor) p7 p8) in
+				let n2 = ((lor) p2 p3) + ((lor) p4 p5) + ((lor) p6 p7) + ((lor) p8 p9) in
+				let n  = if n1 < n2 then n1 else n2 in
+				let m_c  = if (iter = 0) then
+								 	((land) ((lor) ((lor) p6 p7) (lnot p9)) p8)
+								 else
+								 	((land) ((lor) ((lor) p2 p3) (lnot p5)) p4) in
+				(* Check *)
+				if (c = 1 && (n >= 2 && n <= 3) && m_c = 0) then
 					marker.(i).(j) <- 1;
 			done;
 		done;
 		img_mvt m marker;
-		deleting := Images.areThereNonZeros(Images.absDiff m m_bak);
+		deleting := Images.areThereNonZeros (Images.absDiff m m_bak);
 		!deleting;;
 
 	(* Actuall thinning part *)
