@@ -27,4 +27,3 @@ module FFT = Fftw3.D;;
 #use "img_proc.ml";;
 #use "minutae.ml";;
 #use "hough_transform.ml";;
-#use "database_stats.ml";;
