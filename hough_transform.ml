@@ -2,7 +2,7 @@
 open Minutae;;
 open Poincare;;
 
-module Hough_Transform :
+module Hough_transform :
   sig
     val delta :
       Minutae.minutae array -> Minutae.minutae array -> int -> int -> float
@@ -51,17 +51,17 @@ module Hough_Transform :
 			Array.sort r_compare delta_y;
 			Array.sort r_compare delta_theta;
 			(* Remove duplicates - it's worth it *)
-			let rec remove_duplicates_aux arr l n =
+			let rec remove_duplicates_aux arr l n error =
 				if n = (nb_I*nb_T) then l
-				else if arr.(n) = arr.(n-1) then remove_duplicates_aux arr l (n+1)
+				else if arr.(n) = arr.(n-1) then remove_duplicates_aux arr l (n+1) error
 				(* Set a precision on theta of 10^(-10) ~ 10^(-8)° *)
-				else if abs_float (arr.(n) -. arr.(n-1)) < 0.000000001 then
-					remove_duplicates_aux arr l (n+1)
-				else remove_duplicates_aux arr (arr.(n)::l) (n+1); in
-			let remove_duplicates arr = remove_duplicates_aux arr [arr.(0)] 1 in
-			let ret_delta_x = Array.of_list (remove_duplicates delta_x) in
-			let ret_delta_y = Array.of_list (remove_duplicates delta_y) in
-			let ret_delta_theta = Array.of_list (remove_duplicates delta_theta) in
+				else if abs_float (arr.(n) -. arr.(n-1)) < error then
+					remove_duplicates_aux arr l (n+1) error
+				else remove_duplicates_aux arr (arr.(n)::l) (n+1) error; in
+			let remove_duplicates arr error = remove_duplicates_aux arr [arr.(0)] 1 error in
+			let ret_delta_x = Array.of_list (remove_duplicates delta_x 4.) in
+			let ret_delta_y = Array.of_list (remove_duplicates delta_y 4.) in
+			let ret_delta_theta = Array.of_list (remove_duplicates delta_theta 2.8) in
 			(ret_delta_x,ret_delta_y,ret_delta_theta);;
  
 		(* Vote for best delta combo *)
