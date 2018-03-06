@@ -13,6 +13,9 @@ module Minutae :
     val draw_minutae : int -> int -> int -> int -> Graphics.color -> unit
     val display_minutae : int Images.matrix -> unit
     val getMinutaeList : int Images.matrix -> minutae array * int
+    val print_minutae_aux_minu : minutae -> string
+    val print_minutae_aux : minutae array -> int -> int -> string
+    val print_minutae : minutae array * int -> string
   end =
   struct
 
@@ -91,5 +94,29 @@ module Minutae :
 						cur_minutae := !cur_minutae + 1);
 				done;
 			done;(minutae_ret,!cur_minutae);;
+
+		(* Print a minutae *)
+		let print_minutae_aux_minu minu = String.concat "" [
+			"{Minutae.x=";
+			(string_of_int minu.x);
+			";y=";
+			(string_of_int minu.y);
+			";theta=";
+			(string_of_float minu.theta);
+			"};";];;
+		let rec print_minutae_aux arr n maxi =
+			if n = (maxi+1) then ""
+			else
+				String.concat "" [
+					(print_minutae_aux_minu arr.(n));
+					(print_minutae_aux arr (n+1) maxi);];;
+		let print_minutae minu_arr =
+			let (arr,size) = minu_arr in
+			String.concat "" [
+				"([|";
+				print_minutae_aux arr 0 size;
+				"|],";
+				(string_of_int size);
+				")"]
 
 	end

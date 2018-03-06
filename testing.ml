@@ -23,7 +23,7 @@ module Testing :
   struct
 
 		(* Open image to analyse *)
-		let test_image = Images.import_image "Images/ppf1.png"
+		let test_image = Images.import_image "Databases/DB2_B/106_7.tif"
 
 		let filter_test image kernel =
 			let bw_img = Images.imageToGreyScale image in

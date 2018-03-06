@@ -118,6 +118,8 @@ module Hough_transform :
 
 		(* Get matching score after vote *)
 		let getScore (mI,nb_I) (mT,nb_T) =
+			(* Extreme case *)
+			if (nb_I < 1 || nb_T < 1) then 0. else
 			(* Accepted errors *)
 			let error_x = 4 in
 			let error_y = 4 in
